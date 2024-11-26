@@ -1,0 +1,12 @@
+.login-page {
+  font-family: 'Roboto', sans-serif;
+}
+
+.google-login-btn {
+  margin-bottom: 20px;
+}
+
+.login-image {
+  display: block;
+  margin: auto;
+}
