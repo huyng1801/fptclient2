@@ -22,6 +22,7 @@ const HeaderComponent = () => {
           <Nav.Link href="#companies">Mentor</Nav.Link>
           <Nav.Link href="#guide">Cẩm nang</Nav.Link>
           <Nav.Link href="/cv">Tạo CV</Nav.Link>
+          <Nav.Link href="/create-job-post">Tạo việc làm</Nav.Link>
           <FaBell size={20} className="mx-3 text-secondary" />
           <FaUserCircle size={24} className="text-secondary" />
         </Nav>

@@ -1,55 +1,125 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Select, Switch, Typography, message } from 'antd';
-import UserLayout from '../../layouts/UserLayout';
-import PostService from '../../services/PostService'; // Import the PostService
+import React, { useState, useEffect } from 'react';
+import { Form, Input, Button, Select, Switch, Typography, message, InputNumber } from 'antd';
+import JobPostService from '../../services/JobPostService'; // Import JobPostService
+import MajorCodeService from '../../services/MajorCodeService'; // Import MajorCodeService
+import HeaderComponent from "../../components/common/HeaderComponent";
+import FooterComponent from "../../components/common/FooterComponent";
+import { Container } from "react-bootstrap";
 
 const { Title } = Typography;
 const { TextArea } = Input;
 
-const CreatePostPage = () => {
+const CreateJobPostPage = () => {
   const [form] = Form.useForm();
-  const [isPrivate, setIsPrivate] = useState(false);
+  const [majors, setMajors] = useState([]);
+  const [status, setStatus] = useState('Draft');
+
+  useEffect(() => {
+    const fetchMajors = async () => {
+      try {
+        const response = await MajorCodeService.getAllMajorCodes();
+        setMajors(response.items || []); // Safeguard for undefined `items`
+      } catch (error) {
+        message.error('Lỗi khi tải danh sách chuyên ngành!');
+        console.error('Error fetching majors:', error);
+      }
+    };
+    fetchMajors();
+  }, []);
 
   const handleFinish = async (values) => {
+    const jobPostData = {
+      jobTitle: values.title,
+      jobDescription: values.description,
+      minSalary: values.minSalary,
+      maxSalary: values.maxSalary,
+      location: values.location,
+      requirements: values.requirements,
+      benefits: values.benefits,
+      time: new Date(), // Current time or pick from form
+      status: status,
+      email: values.email,
+      userId: JSON.parse(sessionStorage.getItem('userInfo'))?.userId || 0, // Replace with dynamic user ID logic if available
+      majorId: values.majorId,
+    };
+
     try {
-      const postData = {
-        ...values,
-        isPrivate, // Add `isPrivate` to the payload
-      };
-      const response = await PostService.createPost(postData);
-      message.success('Bài viết đã được tạo thành công!');
-      console.log('Tạo bài viết thành công:', response);
-      // You can redirect or reset the form if needed
+      const response = await JobPostService.createJobPost(jobPostData);
+      message.success('Công việc đã được tạo thành công!');
       form.resetFields();
+      console.log('Job post created:', response);
     } catch (error) {
-      message.error('Có lỗi xảy ra khi tạo bài viết. Vui lòng thử lại.');
-      console.error('Error during post creation:', error);
+      message.error('Lỗi khi tạo công việc!');
+      console.error('Error creating job post:', error);
     }
   };
 
   return (
-    <UserLayout>
-      <div style={{ padding: '24px' }}>
-        <Title level={2}>Tạo Bài Viết Mới</Title>
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleFinish}
-        >
+    <div className="d-flex flex-column min-vh-100">
+      <HeaderComponent />
+      <Container>
+        <Title level={2}>Tạo Công Việc Mới</Title>
+        <Form form={form} layout="vertical" onFinish={handleFinish}>
           <Form.Item
             name="title"
-            label="Tiêu Đề Bài Viết"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài viết!' }]}
+            label="Tiêu Đề Công Việc"
+            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
           >
-            <Input placeholder="Nhập tiêu đề bài viết" />
+            <Input placeholder="Nhập tiêu đề công việc" />
           </Form.Item>
 
           <Form.Item
-            name="content"
-            label="Nội Dung Bài Viết"
-            rules={[{ required: true, message: 'Vui lòng nhập nội dung bài viết!' }]}
+            name="description"
+            label="Mô Tả Công Việc"
+            rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
           >
-            <TextArea rows={4} placeholder="Nhập nội dung bài viết" />
+            <TextArea rows={4} placeholder="Nhập mô tả công việc" />
+          </Form.Item>
+
+          <Form.Item
+            name="minSalary"
+            label="Mức Lương Thấp Nhất"
+            rules={[{ type: 'number', min: 0, message: 'Mức lương phải lớn hơn hoặc bằng 0!' }]}
+          >
+            <InputNumber min={0} placeholder="Nhập mức lương tối thiểu" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="maxSalary"
+            label="Mức Lương Cao Nhất"
+            rules={[{ type: 'number', min: 0, message: 'Mức lương phải lớn hơn hoặc bằng 0!' }]}
+          >
+            <InputNumber min={0} placeholder="Nhập mức lương tối đa" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="location"
+            label="Địa Điểm"
+            rules={[{ required: true, message: 'Vui lòng nhập địa điểm!' }]}
+          >
+            <Input placeholder="Nhập địa điểm" />
+          </Form.Item>
+
+          <Form.Item
+            name="requirements"
+            label="Yêu Cầu"
+          >
+            <TextArea rows={3} placeholder="Nhập các yêu cầu công việc" />
+          </Form.Item>
+
+          <Form.Item
+            name="benefits"
+            label="Quyền Lợi"
+          >
+            <TextArea rows={3} placeholder="Nhập các quyền lợi công việc" />
+          </Form.Item>
+
+          <Form.Item
+            name="email"
+            label="Email Liên Hệ"
+            rules={[{ type: 'email', required: true, message: 'Vui lòng nhập email hợp lệ!' }]}
+          >
+            <Input placeholder="Nhập email liên hệ" />
           </Form.Item>
 
           <Form.Item
@@ -58,26 +128,35 @@ const CreatePostPage = () => {
             rules={[{ required: true, message: 'Vui lòng chọn chuyên ngành!' }]}
           >
             <Select placeholder="Chọn chuyên ngành">
-              <Select.Option value="1">Khoa Học Máy Tính</Select.Option>
-              <Select.Option value="2">Quản Trị Kinh Doanh</Select.Option>
-              <Select.Option value="3">Kỹ Thuật</Select.Option>
-              <Select.Option value="4">Khoa Học Sức Khỏe</Select.Option>
+              {majors.map((major) => (
+                <Select.Option key={major.majorId} value={major.majorId}>
+                  {major.majorName}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
 
-          <Form.Item label="Riêng Tư">
-            <Switch checked={isPrivate} onChange={setIsPrivate} />
+          <Form.Item
+            name="status"
+            label="Trạng Thái"
+          >
+            <Select defaultValue="Draft" onChange={(value) => setStatus(value)}>
+              <Select.Option value="Draft">Nháp</Select.Option>
+              <Select.Option value="Open">Đang Mở</Select.Option>
+              <Select.Option value="Closed">Đã Đóng</Select.Option>
+            </Select>
           </Form.Item>
 
           <Form.Item>
             <Button type="primary" htmlType="submit">
-              Tạo Bài Viết
+              Tạo Công Việc
             </Button>
           </Form.Item>
         </Form>
-      </div>
-    </UserLayout>
+      </Container>
+      <FooterComponent />
+    </div>
   );
 };
 
-export default CreatePostPage;
+export default CreateJobPostPage;
