@@ -7,13 +7,13 @@ import UserPage from "./pages/admin/UserPage";
 import HomePage from "./pages/user/HomePage";
 import PostPage from "./pages/admin/PostPage";
 import MentorshipRequestPage from "./pages/admin/MentorshipRequestPage";
-import PostDetail from "./pages/user/PostDetail";
+
 import MajorCodePage from "./pages/admin/MajorCodePage";
 import EventPage from "./pages/admin/EventPage";
 import JobPostPage from "./pages/admin/JobPostPage";
 import JobApplicationPage from "./pages/admin/JobApplicationPage";
 import UserEventPage from "./pages/user/UserEventPage";
-import EventDetailsPage from "./pages/user/EventDetailsPage";
+import RegisterPage from "./pages/user/RegisterPage";
 import UserJobPostPage from "./pages/user/UserJobPostPage";
 import UserJobPostDetailsPage from "./pages/user/UserJobPostDetailsPage";
 import CVPage from "./pages/user/CVPage";
@@ -38,6 +38,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePageV2 />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/list-post" element={<ListPostPage />} />
         <Route path="/list-event" element={<ListEventPage />} />
         <Route path="/post/:postId" element={<PostDetailsPageV2 />} />

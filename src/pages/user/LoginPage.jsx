@@ -27,9 +27,9 @@ const LoginPage = () => {
     const { credential } = credentialResponse;
     try {
       const response = await handleGoogleLogin(credential);
-      if (response.email) {
+      if (response.accessToken) {
         setSuccess("Google login successful! Redirecting...");
-        setTimeout(() => navigate("/home"), 2000);
+        setTimeout(() => navigate("/"), 2000);
       } else {
         setError("Google login failed. Please try again.");
       }
@@ -72,7 +72,7 @@ const LoginPage = () => {
   };
 
   return (
-    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+    <GoogleOAuthProvider clientId="">
       <Box className="login-page" sx={{ display: "flex", height: "100vh" }}>
         {/* Left Section */}
         <Box
@@ -199,7 +199,8 @@ const LoginPage = () => {
 
           <Typography sx={{ mt: 10 }}>
             Don't have an account?{" "}
-            <span style={{ color: "#1976d2", cursor: "pointer" }}>Register</span>
+            <span style={{ color: "#1976d2", cursor: "pointer" }}
+                onClick={() => navigate('/register')}>Register</span>
           </Typography>
         </Box>
       </Box>
