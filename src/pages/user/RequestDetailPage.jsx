@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Button, Card, Form } from "react-bootstrap";
 import { Box, Typography, TextField } from "@mui/material";
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
+import HeaderComponent from "../../components/HeaderComponent";
+import FooterComponent from "../../components/FooterComponent";
 import {
   DesktopDateTimePicker,
   LocalizationProvider,

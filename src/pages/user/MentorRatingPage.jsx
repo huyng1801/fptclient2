@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { Box, Typography } from "@mui/material";
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
-import { PagingListItem } from "../../components/common/PagingListItem";
-import RatingStar from "../../components/common/rating-star/RatingStar";
+import HeaderComponent from "../../components/HeaderComponent";
+import FooterComponent from "../../components/FooterComponent";
+import { PagingListItem } from "../../components/PagingListItem";
+import RatingStar from "../../components/RatingStar";
 import { Star } from "@mui/icons-material";
 
 const MentorRatingPage = () => {

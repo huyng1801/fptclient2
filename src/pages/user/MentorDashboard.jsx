@@ -1,18 +1,27 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Card, Pagination } from "react-bootstrap";
-import { Box } from "@mui/material";
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
-import { Star } from "@mui/icons-material";
+import {
+  Layout,
+  Row,
+  Col,
+  Card,
+  Pagination,
+  Button,
+  Modal,
+  Input,
+  Form,
+} from "antd";
+import { StarOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import FormModal from "../../components/common/FormModal";
+import UserLayout from "../../layouts/UserLayout";
+
+const { Content } = Layout;
 
 const MentorDashboardListItem = ({ item, onclick }) => {
   return (
     <Card className="mb-3 shadow-sm">
-      <Row className="g-0 align-items-center">
-        <Col md={2}>
-          <Card.Img
+      <Row gutter={16} align="middle">
+        <Col span={4}>
+          <img
             src={item.img}
             alt="Card image"
             className="img-fluid"
@@ -25,29 +34,28 @@ const MentorDashboardListItem = ({ item, onclick }) => {
           />
         </Col>
 
-        <Col md={10}>
-          <Card.Body className="d-flex justify-content-between align-items-center">
-            <div
-              className="d-flex flex-column justify-content-between"
-              style={{ height: "100%" }}
-            >
-              <Card.Title className="text-primary">
-                {item.name}
-              </Card.Title>
-              <Card.Text>{item.role}</Card.Text>
-              <Card.Text>{item.major}</Card.Text>
+        <Col span={20}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ flexDirection: "column" }}>
+              <h3 className="text-primary">{item.name}</h3>
+              <p>{item.role}</p>
+              <p>{item.major}</p>
             </div>
             <div className="text-muted text-end">
               <span className="d-flex align-items-center justify-content-end">
                 Đánh giá: {item.rating}
-                <Star
-                  style={{ color: "orange", marginBottom: 2 }}
-                  fontSize="small"
-                  className="ms-1"
+                <StarOutlined
+                  style={{ color: "orange", marginBottom: 2, fontSize: 20 }}
                 />
               </span>
             </div>
-          </Card.Body>
+          </div>
         </Col>
       </Row>
     </Card>
@@ -113,6 +121,7 @@ function MentorDashboardPage() {
       rating: "4.5",
     },
   ];
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   const totalPages = Math.ceil(mentors.length / itemsPerPage);
@@ -120,6 +129,7 @@ function MentorDashboardPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -130,16 +140,8 @@ function MentorDashboardPage() {
     navigate("/mentorDashboard/1");
   };
 
-  const handleShowRequestForm = () => {
-    setIsFormModalOpen(true);
-  };
-
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-
-  const [formValues, setFormValues] = useState({
-    title: "",
-    content: "",
-  });
+  const [formValues, setFormValues] = useState({ title: "", content: "" });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -150,30 +152,28 @@ function MentorDashboardPage() {
     }));
   };
 
-  const checkOTPFormData = () => {
-    return {
-      title: "Yêu cầu",
-      fields: [
-        {
-          value: formValues.title,
-          label: "Tiêu đề",
-          name: "title",
-          required: true,
-          type: "text",
-          onChange: handleChange,
-        },
-        {
-          value: formValues.content,
-          label: "Nội dung yêu cầu",
-          name: "content",
-          type: "text",
-          required: true,
-          onChange: handleChange,
-        },
-      ],
-      submitText: "Gửi Yêu Cầu",
-    };
-  };
+  const checkOTPFormData = () => ({
+    title: "Yêu cầu",
+    fields: [
+      {
+        value: formValues.title,
+        label: "Tiêu đề",
+        name: "title",
+        required: true,
+        type: "text",
+        onChange: handleChange,
+      },
+      {
+        value: formValues.content,
+        label: "Nội dung yêu cầu",
+        name: "content",
+        type: "text",
+        required: true,
+        onChange: handleChange,
+      },
+    ],
+    submitText: "Gửi Yêu Cầu",
+  });
 
   const onSendRequest = () => {
     alert("Send request successfully!");
@@ -184,56 +184,79 @@ function MentorDashboardPage() {
   };
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <HeaderComponent />
+    <UserLayout>
+      <Row gutter={[16, 16]} justify="center">
+        <Col span={8} style={{ textAlign: "right" }}>
+          <Button type="primary" onClick={() => setIsFormModalOpen(true)}>
+            Gửi Yêu Cầu
+          </Button>
+        </Col>
+      </Row>
 
-      <Box sx={{ backgroundColor: "#F7F7F7", py: 4 }}>
-        <Container>
-          <Row className="mb-4 justify-content-center">
-            <Col md={8} className="text-end">
-              <button
-                onClick={() => handleShowRequestForm()}
-                className="btn btn-primary"
-              >
-                Gửi Yêu Cầu
-              </button>
-            </Col>
-          </Row>
-          <Row className="mb-4 justify-content-center">
-            <Col md={8}>
-              {currentItem.map((item, index) => (
-                <MentorDashboardListItem
-                  key={index}
-                  onclick={showMentorDashboardDetails}
-                  item={item}
-                />
-              ))}
-              <Pagination className="mt-3 justify-content-end">
-                {[...Array(totalPages).keys()].map((page) => (
-                  <Pagination.Item
-                    key={page + 1}
-                    active={page + 1 === currentPage}
-                    onClick={() => handlePageChange(page + 1)}
-                  >
-                    {page + 1}
-                  </Pagination.Item>
-                ))}
-              </Pagination>
-            </Col>
-          </Row>
-        </Container>
-      </Box>
+      <Row gutter={[16, 16]} justify="center">
+        <Col span={16}>
+          {currentItem.map((item, index) => (
+            <MentorDashboardListItem
+              key={index}
+              onclick={showMentorDashboardDetails}
+              item={item}
+            />
+          ))}
+          <Pagination
+            current={currentPage}
+            total={mentors.length}
+            pageSize={itemsPerPage}
+            onChange={handlePageChange}
+            showSizeChanger={false}
+            style={{ marginTop: "20px", textAlign: "center" }}
+          />
+        </Col>
+      </Row>
 
-      <FooterComponent />
-      {isFormModalOpen && (
-        <FormModal
-          handleClose={handleFormModalClose}
-          open={isFormModalOpen}
-          formData={checkOTPFormData()}
-          onSubmit={onSendRequest}
-        />
-      )}
-    </div>
+      <Modal
+        title="Gửi Yêu Cầu"
+        visible={isFormModalOpen}
+        onCancel={handleFormModalClose}
+        footer={null}
+      >
+        <Form
+          onFinish={onSendRequest}
+          layout="vertical"
+          initialValues={formValues}
+        >
+          <Form.Item
+            label="Tiêu đề"
+            name="title"
+            rules={[{ required: true, message: "Vui lòng nhập tiêu đề!" }]}
+          >
+            <Input
+              name="title"
+              value={formValues.title}
+              onChange={handleChange}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Nội dung yêu cầu"
+            name="content"
+            rules={[{ required: true, message: "Vui lòng nhập nội dung!" }]}
+          >
+            <Input.TextArea
+              name="content"
+              value={formValues.content}
+              onChange={handleChange}
+              rows={4}
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Gửi Yêu Cầu
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </UserLayout>
   );
 }
 

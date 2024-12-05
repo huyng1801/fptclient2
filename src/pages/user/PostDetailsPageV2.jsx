@@ -1,14 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Form, Button } from "react-bootstrap";
-import { Box, Typography } from "@mui/material";
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
-import { Visibility, AccessTime, Person, Report } from "@mui/icons-material";
+import {
+  Layout,
+  Form,
+  Row,
+  Col,
+  Card,
+  Input,
+  Button,
+  Typography,
+  notification,
+} from "antd";
+import {
+  Box,
+  Report,
+  Visibility,
+  AccessTime,
+  Person,
+  Comment as CommentIcon,
+} from "@mui/icons-material";
+import UserLayout from "../../layouts/UserLayout"; // Assuming the path to UserLayout
 import { useParams } from "react-router-dom";
 import PostService from "../../services/PostService";
 import CommentService from "../../services/CommentService";
-import { notification } from "antd"; // Import notification from Ant Design
-import "./PostDetailsPageV2.css";
+
+const { Content } = Layout;
 
 function PostDetailsPageV2() {
   const { postId } = useParams(); // Get the postId from the URL
@@ -17,6 +32,7 @@ function PostDetailsPageV2() {
   const [newComment, setNewComment] = useState(""); // State to handle new comment input
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [replyVisible, setReplyVisible] = useState(null); // Track the visible reply input based on comment id
 
   // Fetch post details and comments when the component mounts
   useEffect(() => {
@@ -49,7 +65,7 @@ function PostDetailsPageV2() {
 
     const commentData = {
       postId,
-      authorId: JSON.parse(sessionStorage.getItem('userInfo'))?.userId || 0, // Replace with actual user ID
+      authorId: JSON.parse(sessionStorage.getItem("userInfo"))?.userId || 0, // Replace with actual user ID
       content: newComment,
       type: "Comment",
       parentCommentId: null, // No parent comment for new comments
@@ -79,7 +95,7 @@ function PostDetailsPageV2() {
 
     const replyData = {
       postId,
-      authorId: JSON.parse(sessionStorage.getItem('userInfo'))?.userId || 0, // Replace with actual user ID
+      authorId: JSON.parse(sessionStorage.getItem("userInfo"))?.userId || 0, // Replace with actual user ID
       type: "Comment",
       content: replyContent,
       parentCommentId: parentCommentId,
@@ -88,6 +104,7 @@ function PostDetailsPageV2() {
     try {
       await CommentService.createNewComment(replyData);
       setComments((prevComments) => [...prevComments, replyData]); // Add the reply to the list
+      setReplyVisible(null); // Hide the reply input after submission
       notification.success({
         message: "Success",
         description: "Your reply has been posted successfully.",
@@ -100,6 +117,12 @@ function PostDetailsPageV2() {
     }
   };
 
+  // Handle the reply button click, toggle visibility of the input for the selected comment
+  const handleReplyClick = (commentId) => {
+    // If the clicked comment already has its input visible, hide it, otherwise show it
+    setReplyVisible((prevState) => (prevState === commentId ? null : commentId));
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -109,106 +132,115 @@ function PostDetailsPageV2() {
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <HeaderComponent />
+    <UserLayout>
+      <Content>
+        <Row justify="center">
+          <Col span={24}>
+            <Card
+              title={
+                <Typography.Title level={2}>{postDetails.title}</Typography.Title>
+              }
+              bordered={false}
+              style={{ marginBottom: 24 }}
+            >
+              <Typography.Text>{postDetails.content}</Typography.Text>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: 16,
+                }}
+              >
+                <Typography.Text type="secondary">
+                  <Person style={{ fontSize: 16 }} /> {postDetails.postedBy}
+                </Typography.Text>
+                <Typography.Text type="secondary">
+                  <Visibility style={{ fontSize: 16 }} /> {postDetails.views}{" "}
+                  views
+                </Typography.Text>
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <Report style={{ fontSize: 20 }} />
+                <span> Report</span>
+              </div>
+            </Card>
 
-      <Box sx={{ backgroundColor: "#f9f9f9", py: 4 }}>
-        <Container>
-          <Card className="mb-4 shadow-sm">
-            <Card.Body>
-              <Row>
-                <Col>
-                  <Typography variant="h4" className="text-primary mb-3">
-                    {postDetails.title}
-                  </Typography>
-                </Col>
+            {/* Comments Section */}
+            <Typography.Title level={4}>
+              Comments ({comments.length})
+            </Typography.Title>
 
-                <Col md="auto" className="d-flex align-items-center">
-                  <div className="report-button">
-                    <Report className="report-icon" fontSize="large" />
-                    <div className="tooltip">report</div>
-                  </div>
-                </Col>
-              </Row>
-              <Typography variant="body1" className="mb-3">
-                {postDetails.content}
-              </Typography>
-              <Typography variant="subtitle1" className="text-muted">
-                <Person fontSize="small" className="me-1" /> {postDetails.postedBy}
-              </Typography>
-              <Typography variant="subtitle2" className="text-muted">
-                <Visibility fontSize="small" className="me-1" /> {postDetails.views}
-              </Typography>
-            </Card.Body>
-          </Card>
-
-          <Typography variant="h5" className="mb-4">
-            Comments ({comments.length})
-          </Typography>
-
-          {/* Display Comments */}
-          {comments.map((comment, index) => (
-            <Card key={index} className="mb-3 shadow-sm">
-              <Card.Body>
+            {comments.map((comment, index) => (
+              <Card key={index} style={{ marginBottom: 16 }}>
                 <Row>
-                  <Col>
-                    <Typography variant="subtitle1" className="fw-bold">
-                      <Person fontSize="small" className="me-1" />
-                      {comment.user}
-                    </Typography>
-                    <Typography variant="body2" className="text-muted">
-                      <AccessTime fontSize="small" className="me-1" />
-                      {comment.date}
-                    </Typography>
-                    <Typography variant="body1" className="mt-2">
-                      {comment.content}
-                    </Typography>
-
-                    {/* Reply to Comment */}
-                    <Form onSubmit={(e) => handleReplySubmit(e, comment.id)}>
-                      <Form.Group controlId="reply">
-                        <Form.Control
-                          type="text"
-                          placeholder="Write a reply..."
-                          name="reply"
-                        />
-                      </Form.Group>
-                      <Button variant="secondary" type="submit" className="mt-2">
-                        Reply
-                      </Button>
-                    </Form>
+                  <Col span={20}>
+                    <Typography.Text strong>{comment.user}</Typography.Text>
+                    <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
+                      <AccessTime style={{ fontSize: 14 }} /> {comment.date}
+                    </Typography.Text>
+                    <p style={{ marginTop: 8 }}>{comment.content}</p>
                   </Col>
-                  <Col md="auto" className="d-flex align-items-center">
-                    <div className="report-button">
-                      <Report className="report-icon" fontSize="small" />
-                      <div className="tooltip">report</div>
+                  <Col
+                    span={4}
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div
+                      onClick={() => handleReplyClick(comment.commentId)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <CommentIcon style={{ fontSize: 16 }} />
+                      <span> Reply</span>
                     </div>
                   </Col>
                 </Row>
-              </Card.Body>
-            </Card>
-          ))}
 
-          {/* New Comment Input */}
-          <Form onSubmit={handleNewCommentSubmit}>
-            <Form.Group controlId="newComment">
-              <Form.Control
-                as="textarea" // Use textarea for larger input
-                rows={4} // Set the number of rows to make the input area larger
-                placeholder="Write a comment..."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-              />
-            </Form.Group>
-            <Button variant="primary" type="submit" className="mt-2">
-              Post Comment
-            </Button>
-          </Form>
-        </Container>
-      </Box>
+                {/* Show reply input if it's visible */}
+                {replyVisible === comment.commentId && (
+                  <Form onSubmit={(e) => handleReplySubmit(e, comment.commentId)}>
+                    <Row gutter={16}>
+                      <Col span={20}>
+                        <Input
+                          placeholder="Write a reply..."
+                          name="reply"
+                          style={{ width: "100%" }}
+                        />
+                      </Col>
+                      <Col span={4}>
+                        <Button type="primary" htmlType="submit" block>
+                          Reply
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Form>
+                )}
+              </Card>
+            ))}
 
-      <FooterComponent />
-    </div>
+            {/* New Comment Section */}
+            <Form onSubmit={handleNewCommentSubmit}>
+              <Card>
+                <Form.Item>
+                  <Input.TextArea
+                    rows={4}
+                    placeholder="Write a comment..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    style={{ width: "100%" }}
+                  />
+                </Form.Item>
+                <Button type="primary" htmlType="submit" block>
+                  Post Comment
+                </Button>
+              </Card>
+            </Form>
+          </Col>
+        </Row>
+      </Content>
+    </UserLayout>
   );
 }
 

@@ -3,8 +3,8 @@ import { Form, Input, Button, Select, Switch, Typography, message } from 'antd';
 import { Container } from "react-bootstrap";
 import UserLayout from '../../layouts/UserLayout';
 import PostService from '../../services/PostService'; // Import the PostService
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
+import HeaderComponent from "../../components/HeaderComponent";
+import FooterComponent from "../../components/FooterComponent";
 const { Title } = Typography;
 const { TextArea } = Input;
 

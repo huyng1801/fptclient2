@@ -1,29 +1,44 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import { Box } from "@mui/material";
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
-import { MainBodyListItem } from "./ListPostPage";
+import { Row, Col, Card, Button, Typography, Input, Select } from "antd";
 import { useNavigate } from "react-router-dom";
-import PostService from "../../services/PostService"; // Import the PostService
-import EventService from "../../services/EventService"; // Import the EventService
-import JobPostService from "../../services/JobPostService"; // Import the JobService
+import {
+  EnvironmentOutlined,
+  ProfileOutlined,
+  ReadOutlined,
+  DollarCircleOutlined,
+  SafetyOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import UserLayout from "../../layouts/UserLayout"; // Assuming the path to UserLayout
+import PostService from "../../services/PostService";
+import EventService from "../../services/EventService";
+import JobPostService from "../../services/JobPostService";
 import UserService from "../../services/UserService";
-import { LocationOn, Description, School, AttachMoney, VerifiedUser, Event, Visibility, AccessTime, Person } from "@mui/icons-material";
-function HomePageV2() {
-  const [posts, setPosts] = useState([]); // State to store posts
-  const [events, setEvents] = useState([]); // State to store events
-  const [jobs, setJobs] = useState([]); // State to store jobs
-  const [organizers, setOrganizers] = useState({});
+import {MainBodyListItem} from "../../components/MainBodyListItem";
 
+
+const { Title, Text } = Typography;
+const { Option } = Select;
+
+function HomePageV2() {
+  const [posts, setPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [organizers, setOrganizers] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [sortOption, setSortOption] = useState("latest");
   const navigate = useNavigate();
 
-  // Fetch posts, events, and jobs when the component mounts
   useEffect(() => {
     async function fetchData() {
       try {
         const fetchedPosts = await PostService.getAllPosts();
         setPosts(fetchedPosts.items);
+        setFilteredPosts(fetchedPosts.items);
 
         const fetchedEvents = await EventService.getAllEvents();
         setEvents(fetchedEvents.items);
@@ -37,16 +52,13 @@ function HomePageV2() {
               .then((user) => ({ organizerId: event.organizerId, user }))
               .catch((error) => {
                 console.error(`Error fetching user with ID ${event.organizerId}:`, error);
-                return { organizerId: event.organizerId, user: null }; // Return null if user fetch fails
+                return { organizerId: event.organizerId, user: null };
               });
           }
           return Promise.resolve({ organizerId: event.organizerId, user: null });
         });
 
-        // Wait for all user fetch requests to complete
         const users = await Promise.all(userPromises);
-        
-        // Organize the user data into an object by organizerId
         const organizersData = {};
         users.forEach(({ organizerId, user }) => {
           if (user) {
@@ -61,144 +73,215 @@ function HomePageV2() {
     }
 
     fetchData();
-  }, []); // Empty dependency array ensures this runs once when the component mounts
+  }, []);
+
+  const handleSearch = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+
+    const filtered = posts.filter((post) =>
+      post.title.toLowerCase().includes(query) ||
+      post.content.toLowerCase().includes(query)
+    );
+    setFilteredPosts(filtered);
+  };
+
+  const handleCategoryChange = (value) => {
+    setFilterCategory(value);
+    // Add filter logic based on category if required
+  };
+
+  const handleSortChange = (value) => {
+    setSortOption(value);
+    // Implement sorting logic based on selected option
+    const sortedPosts = [...filteredPosts].sort((a, b) => {
+      if (value === "latest") {
+        return new Date(b.time) - new Date(a.time);
+      } else if (value === "oldest") {
+        return new Date(a.time) - new Date(b.time);
+      }
+      return 0;
+    });
+    setFilteredPosts(sortedPosts);
+  };
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <HeaderComponent />
+    <UserLayout>
+      <Row gutter={[16, 16]}>
+        {/* Post Section */}
+        <Col span={12}>
+          <Title level={3} style={{ marginBottom: "20px", fontWeight: "600" }}>Diễn đàn</Title>
 
-      <Box sx={{ backgroundColor: "#F7F7F7", py: 4 }}>
-        <Container>
-          <Row className="mb-4">
-            {/* Posts Section */}
-            <Col md={4}>
-              <h4 className="mb-3">Diễn đàn</h4>
-              {posts.map((post) => (
-                <MainBodyListItem
-                  key={post.postId} // Ensure each item has a unique key, assuming `id` is available
-                  onClick={() => navigate(`/post/${post.postId}`)} // Dynamically navigate to the post detail page
-                  item={post}
-                />
-              ))}
-              <Button
-                onClick={() => navigate("/list-post")}
-                variant="warning"
-                className="mt-2"
+          <Row gutter={[16, 16]}>
+            {/* Search and Order Section */}
+            <Col span={12}>
+              <Select
+                defaultValue="latest"
+                style={{ width: "100%", marginBottom: 15 }}
+                onChange={handleSortChange}
               >
-                Xem thêm
-              </Button>
+                <Option value="latest">Mới nhất</Option>
+                <Option value="oldest">Cũ nhất</Option>
+              </Select>
             </Col>
+            <Col span={12}>
+              <Input
+                placeholder="Tìm kiếm bài viết"
+                value={searchQuery}
+                onChange={handleSearch}
+                style={{
+                  width: "100%",
+                  borderRadius: "8px",
+                  boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)"
+                }}
+              />
+            </Col>
+          </Row>
 
-            {/* Events Section */}
-            <Col md={4}>
-              <h4 className="mb-3">Sự kiện</h4>
-              {events.map((event) => (
-                <Card className="mb-3 shadow-sm" key={event.eventId}>
-                  <Card.Body>
-                    {/* Make the title clickable */}
-                    <Card.Title
-                      className="text-primary"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/event/${event.eventId}`)}
-                    >
-                      {event.eventName}
-                    </Card.Title>
-                    <Card.Text>{event.description}</Card.Text>
-                    <div className="text-muted">
-                      <p className="mb-1 d-flex align-items-center">
-                        <AccessTime fontSize="small" className="me-2" />
-                        Thời gian: {event.time}
-                      </p>
-                      <p className="mb-1 d-flex align-items-center">
-                        <Visibility fontSize="small" className="me-2" />
-                        Địa điểm: {event.location}
-                      </p>
-                      <p className="mb-1 d-flex align-items-center">
-                        <Person fontSize="small" className="me-2" />
-                        Người tổ chức: {organizers[event.organizerId] ? `${organizers[event.organizerId]?.firstName} ${organizers[event.organizerId]?.lastName}` : "Loading user..."}
-                      </p>
-                    </div>
-                  </Card.Body>
+          {filteredPosts.slice(0, 5).map((post) => (
+            <MainBodyListItem
+              key={post.postId}
+              onClick={() => navigate(`/post/${post.postId}`)}
+              item={post}
+            />
+          ))}
+          <Button
+            type="primary"
+            onClick={() => navigate("/list-post")}
+            style={{
+              width: "100%",
+              marginTop: "10px",
+              borderRadius: "8px",
+              padding: "12px",
+              backgroundColor: "#1890ff",
+              color: "#fff",
+              fontWeight: "600"
+            }}
+          >
+            Xem thêm
+          </Button>
+        </Col>
+        {/* Event and Job Sections */}
+        <Col span={12}>
+          <Row gutter={[16, 16]}>
+            {/* Event Section */}
+            <Col span={12}>
+              <Title level={3} style={{ marginBottom: "20px", fontWeight: "600" }}>Sự kiện</Title>
+              {events.slice(0, 3).map((event) => (
+                <Card
+                  key={event.eventId}
+                  hoverable
+                  style={{
+                    marginBottom: "20px",
+                    borderRadius: "12px",
+                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                  }}
+                  onClick={() => navigate(`/event/${event.eventId}`)}
+                >
+                  <Card.Meta
+                    title={<a>{event.eventName}</a>}
+                    description={event.description}
+                  />
+                  <div style={{ marginTop: "10px", fontSize: "14px" }}>
+                    <Text>
+                      <ClockCircleOutlined /> Thời gian: {event.time}
+                    </Text>
+                    <br />
+                    <Text>
+                      <EnvironmentOutlined /> Địa điểm: {event.location}
+                    </Text>
+                    <br />
+                    <Text>
+                      <UserOutlined /> Người tổ chức:{" "}
+                      {organizers[event.organizerId]
+                        ? `${organizers[event.organizerId]?.firstName} ${organizers[event.organizerId]?.lastName}`
+                        : "Loading..."}
+                    </Text>
+                  </div>
                 </Card>
               ))}
               <Button
+                type="primary"
                 onClick={() => navigate("/list-event")}
-                variant="warning"
-                className="mt-2"
+                style={{
+                  width: "100%",
+                  marginTop: "10px",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  backgroundColor: "#1890ff",
+                  color: "#fff",
+                  fontWeight: "600"
+                }}
               >
                 Xem thêm
               </Button>
             </Col>
 
-            {/* Jobs Section */}
-            <Col md={4}>
-                <h4 className="mb-3">Tuyển dụng</h4>
-                {jobs.map((job) => (
-                  <Card className="mb-3 shadow-sm" key={job.jobPostId}>
-                    <Card.Body>
-                      {/* Job Title */}
-                      <Card.Title className="text-primary" style={{ cursor: 'pointer' }} onClick={() => navigate(`/user-job-post/${job.jobPostId}`)}>
-                        {job.jobTitle}
-                      </Card.Title>
-                      
-                      {/* Location */}
-                      <Card.Text className="mb-2 d-flex align-items-center">
-                        <LocationOn fontSize="small" className="me-2" />
-                        Địa điểm: {job.location}
-                      </Card.Text>
-
-                      {/* Job Description */}
-                      <Card.Text className="mb-2 d-flex align-items-center">
-                        <Description fontSize="small" className="me-2" />
-                        Mô tả: {job.jobDescription}
-                      </Card.Text>
-
-                      {/* Requirements */}
-                      <Card.Text className="mb-2 d-flex align-items-center">
-                        <School fontSize="small" className="me-2" />
-                        Yêu cầu: {job.requirements}
-                      </Card.Text>
-
-                      {/* Salary */}
-                      <Card.Text className="mb-2 d-flex align-items-center">
-                        <AttachMoney fontSize="small" className="me-2" />
-                        Lương:{" "}
-                        {job.isDeal
-                          ? `${job.minSalary} - ${job.maxSalary} USD (Có thể thương lượng)`
-                          : `${job.minSalary} - ${job.maxSalary} USD`}
-                      </Card.Text>
-
-                      {/* VerifiedUser */}
-                      <Card.Text className="mb-2 d-flex align-items-center">
-                        <VerifiedUser fontSize="small" className="me-2" />
-                        Quyền lợi: {job.benefits}
-                      </Card.Text>
-
-                      {/* Post Date */}
-                      <Card.Text className="text-muted d-flex align-items-center">
-                        <Event fontSize="small" className="me-2" />
-                        Ngày đăng:{" "}
-                        {new Date(job.time).toLocaleDateString("vi-VN")}
-                      </Card.Text>
-
-                    </Card.Body>
-                  </Card>
-                ))}
+            {/* Job Post Section */}
+            <Col span={12}>
+              <Title level={3} style={{ marginBottom: "20px", fontWeight: "600" }}>Tuyển dụng</Title>
+              {jobs.slice(0, 2).map((job) => (
+                <Card
+                  key={job.jobPostId}
+                  hoverable
+                  style={{
+                    marginBottom: "20px",
+                    borderRadius: "12px",
+                    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                  }}
+                  onClick={() => navigate(`/user-job-post/${job.jobPostId}`)}
+                >
+                  <Card.Meta
+                    title={<a>{job.jobTitle}</a>}
+                    description={job.jobDescription}
+                  />
+                  <div style={{ marginTop: "10px", fontSize: "14px" }}>
+                    <Text>
+                      <EnvironmentOutlined /> Địa điểm: {job.location}
+                    </Text>
+                    <br />
+                    <Text>
+                      <ProfileOutlined /> Mô tả: {job.jobDescription}
+                    </Text>
+                    <br />
+                    <Text>
+                      <ReadOutlined /> Yêu cầu: {job.requirements}
+                    </Text>
+                    <br />
+                    <Text>
+                      <DollarCircleOutlined /> Lương:{" "}
+                      {job.isDeal
+                        ? `${job.minSalary} - ${job.maxSalary} USD (Có thể thương lượng)`
+                        : `${job.minSalary} - ${job.maxSalary} USD`}
+                    </Text>
+                    <br />
+                    <Text>
+                      <SafetyOutlined /> Quyền lợi: {job.benefits}
+                    </Text>
+                    <br />
+                  </div>
+                </Card>
+              ))}
               <Button
+                type="primary"
                 onClick={() => navigate("/list-job")}
-                variant="warning"
-                className="mt-2"
+                style={{
+                  width: "100%",
+                  marginTop: "10px",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  backgroundColor: "#1890ff",
+                  color: "#fff",
+                  fontWeight: "600"
+                }}
               >
                 Xem thêm
               </Button>
             </Col>
-
           </Row>
-        </Container>
-      </Box>
-
-      <FooterComponent />
-    </div>
+        </Col>
+      </Row>
+    </UserLayout>
   );
 }
 

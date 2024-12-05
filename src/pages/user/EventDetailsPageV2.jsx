@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Table, Card, Image } from "react-bootstrap";
 import { Box, Typography } from "@mui/material";
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
-import EventService from "../../services/EventService"; // Assuming the services are properly configured
+import { Layout, Spin, Button, Rate } from "antd";
+import { LoadingOutlined } from "@ant-design/icons"; // Ant Design Icon
+import HeaderComponent from "../../components/HeaderComponent";
+import FooterComponent from "../../components/FooterComponent";
+import EventService from "../../services/EventService";
 import UserJoinEventService from "../../services/UserJoinEventService";
-import "./EventDetailsPageV2.css";
+import UserLayout from "../../layouts/UserLayout"; // Assuming the path to UserLayout
+
+const { Content } = Layout;
 
 function EventDetailsPageV2() {
   const [eventDetails, setEventDetails] = useState(null);
@@ -19,11 +23,10 @@ function EventDetailsPageV2() {
         const event = await EventService.getEventById(eventId);
         setEventDetails(event);
         const feedbackResponse = await UserJoinEventService.viewAllUserJoinEvents(
-          { eventId }, // Filter object with EventId
-          { page: 1, pageSize: 10 } // Optional pagination parameters
+          { eventId },
+          { page: 1, pageSize: 10 }
         );
         setFeedbacks(feedbackResponse.items);
-        
       } catch (error) {
         console.error("Error fetching event details or feedback:", error);
       } finally {
@@ -35,7 +38,11 @@ function EventDetailsPageV2() {
   }, [eventId]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ textAlign: "center", marginTop: "20%" }}>
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+      </div>
+    );
   }
 
   if (!eventDetails) {
@@ -43,25 +50,22 @@ function EventDetailsPageV2() {
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <HeaderComponent />
-      <Box sx={{ backgroundColor: "#f9f9f9", py: 4 }}>
-        <Container>
+<UserLayout>
           <Row className="mb-4">
             <Col>
-              <Typography variant="h5" className="mb-3">
+              <Typography variant="h5" style={{ marginBottom: "20px", fontSize: "24px", fontWeight: "bold" }}>
                 {eventDetails.title}
               </Typography>
               <Row>
-                <Col md={3} className="d-flex align-items-center logo-container">
+                <Col md={3} style={{ display: "flex", alignItems: "center" }}>
                   <Image
-                    src={eventDetails.img || "/assets/images/default-event.png"} // Fallback for missing image
+                    src={eventDetails.img || "/assets/images/default-event.png"}
                     alt="Event"
-                    className="event-image"
+                    style={{ width: "100%", borderRadius: "8px" }}
                   />
                 </Col>
                 <Col md={9}>
-                  <Table bordered className="event-table">
+                  <Table bordered style={{ background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)" }}>
                     <tbody>
                       <tr>
                         <th>Mô Tả</th>
@@ -87,33 +91,33 @@ function EventDetailsPageV2() {
           </Row>
           <Row>
             <Col>
-              <Typography variant="h6" className="mb-3">
+              <Typography variant="h6" style={{ marginBottom: "20px", fontSize: "20px", fontWeight: "600" }}>
                 Phản hồi từ người tham gia
               </Typography>
               {feedbacks.map((feedback, index) => (
-                <Card className="mb-3 shadow-sm" key={index}>
+                <Card key={index} style={{ marginBottom: "20px", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)" }}>
                   <Card.Body>
                     <Row>
                       <Col md={3}>
-                        <Typography className="fw-bold">Người dùng:</Typography>
+                        <Typography style={{ fontWeight: "bold" }}>Người dùng:</Typography>
                         <Typography>{feedback.user}</Typography>
                       </Col>
                       <Col md={6}>
-                        <Typography className="fw-bold">Nội dung:</Typography>
+                        <Typography style={{ fontWeight: "bold" }}>Nội dung:</Typography>
                         <Typography>{feedback.content}</Typography>
                       </Col>
                       <Col md={3}>
-                        <Typography className="fw-bold">Ngày tạo:</Typography>
+                        <Typography style={{ fontWeight: "bold" }}>Ngày tạo:</Typography>
                         <Typography>{feedback.createdAt}</Typography>
                       </Col>
                     </Row>
-                    <Row className="mt-3">
+                    <Row style={{ marginTop: "15px" }}>
                       <Col md={3}>
-                        <Typography className="fw-bold">Đánh giá:</Typography>
-                        <Typography>{feedback.rating}</Typography>
+                        <Typography style={{ fontWeight: "bold" }}>Đánh giá:</Typography>
+                        <Rate value={feedback.rating} disabled style={{ fontSize: "16px" }} />
                       </Col>
                       <Col md={3}>
-                        <Typography className="fw-bold">Tạo bởi:</Typography>
+                        <Typography style={{ fontWeight: "bold" }}>Tạo bởi:</Typography>
                         <Typography>{feedback.createdBy}</Typography>
                       </Col>
                     </Row>
@@ -122,10 +126,7 @@ function EventDetailsPageV2() {
               ))}
             </Col>
           </Row>
-        </Container>
-      </Box>
-      <FooterComponent />
-    </div>
+          </UserLayout>
   );
 }
 

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Select, Switch, Typography, message, InputNumber } from 'antd';
 import JobPostService from '../../services/JobPostService'; // Import JobPostService
 import MajorCodeService from '../../services/MajorCodeService'; // Import MajorCodeService
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
+import HeaderComponent from "../../components/HeaderComponent";
+import FooterComponent from "../../components/FooterComponent";
 import { Container } from "react-bootstrap";
 
 const { Title } = Typography;

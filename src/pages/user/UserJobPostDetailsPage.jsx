@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import { Layout, Typography, Button, Spin, notification, Form, Input } from 'antd';
 import { Container } from "react-bootstrap";
 import { Box } from "@mui/material";
-import HeaderComponent from "../../components/common/HeaderComponent";
-import FooterComponent from "../../components/common/FooterComponent";
+import HeaderComponent from "../../components/HeaderComponent";
+import FooterComponent from "../../components/FooterComponent";
 import JobPostService from '../../services/JobPostService'; // Service to interact with API
 
 const { Title, Text, Paragraph } = Typography;
