@@ -4,8 +4,6 @@ import { Layout, Row, Col } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import UserLayout from '../../layouts/UserLayout';
 import CVService from '../../services/CVService';
-import HeaderComponent from "../../components/HeaderComponent";
-import FooterComponent from "../../components/FooterComponent";
 const { TextArea } = Input;
 const { Option } = Select;
 const { Header, Content, Footer } = Layout;
@@ -57,11 +55,10 @@ const CVPage = () => {
   };
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <HeaderComponent />
+<UserLayout>
 
-      <Row justify="center" style={{ marginTop: '30px' }}>
-        <Col span={16} style={{ background: '#fff', padding: '30px', borderRadius: '8px' }}>
+      <Row justify="center">
+        <Col span={24} style={{ background: '#fff', padding: '30px', borderRadius: '8px' }}>
           <h2>Gửi CV của bạn</h2>
           <Form
             form={form}
@@ -294,9 +291,7 @@ const CVPage = () => {
         </Col>
       </Row>
 
-
-      <FooterComponent />
-    </div>
+      </UserLayout>
   );
 };
 
