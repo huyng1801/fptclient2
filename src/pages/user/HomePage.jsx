@@ -1,135 +1,127 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Menu, List, Typography, Button, Input } from 'antd';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
-import UserLayout from '../../layouts/UserLayout';
-import postService from '../../services/PostService'; // Import your postService
+import React, { useState, useEffect } from "react";
+import { Row, Col } from "antd";
+import { useNavigate } from "react-router-dom";
+import UserLayout from "../../layouts/UserLayout/UserLayout";
+import PostService from "../../services/PostService";
+import EventService from "../../services/EventService";
+import JobPostService from "../../services/JobPostService";
+import UserService from "../../services/UserService";
+import PostSection from "../../components/PostSection/PostSection";
+import EventCard from "../../components/EventCard/EventCard";
+import JobCard from "../../components/JobCard/JobCard";
+import SectionList from "../../components/SectionList/SectionList";
+import useFetchData from "../../hooks/useFetchData";
 
-const { Sider, Content } = Layout;
-const { Title, Text } = Typography;
-const { Search } = Input;
+function HomePage() {
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [organizers, setOrganizers] = useState({});
+  const navigate = useNavigate();
 
-// Sample categories (could be dynamic as well)
-const categories = ['Công Nghệ', 'Sức Khỏe', 'Phong Cách Sống', 'Tài Chính', 'Giáo Dục'];
+  const { data: posts } = useFetchData(PostService.getAllPosts);
+  const { data: events } = useFetchData(EventService.getAllEvents);
+  const { data: jobs } = useFetchData(JobPostService.getAllJobPosts);
 
-const HomePage = () => {
-  const navigate = useNavigate(); // Initialize the navigation hook
-  const [posts, setPosts] = useState([]); // State to hold posts
-  const [loading, setLoading] = useState(true); // Loading state
-  const [page, setPage] = useState(1); // Current page
-  const [total, setTotal] = useState(0); // Total posts count
-  const [filter, setFilter] = useState(''); // Filter term for search
-  const [category, setCategory] = useState(''); // Selected category for filtering
-
-  // Fetch posts from the API
-  const fetchPosts = async () => {
-    setLoading(true);
-    try {
-      // Fetch posts using the postService
-      const response = await postService.getAllPosts({
-        filter,
-        category,
-        page,
-        size: 5, // Specify the page size
-      });
-      // Assuming the response contains 'data' (posts) and 'total' (total post count)
-      setPosts(response.items); // Set posts
-      setTotal(response.total); // Set total posts count for pagination
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Use effect to fetch posts when page, filter, or category changes
   useEffect(() => {
-    fetchPosts();
-  }, [page, filter, category]);
+    setFilteredPosts(posts);
+  }, [posts]);
 
-  // Handle search input change
-  const handleSearch = (value) => {
-    setFilter(value);
-    setPage(1); // Reset to first page when search term changes
+  useEffect(() => {
+    async function fetchOrganizers() {
+      const userPromises = events.map((event) => {
+        if (event.organizerId) {
+          return UserService.getUser(event.organizerId)
+            .then((user) => ({ organizerId: event.organizerId, user }))
+            .catch((error) => {
+              console.error(`Error fetching user with ID ${event.organizerId}:`, error);
+              return { organizerId: event.organizerId, user: null };
+            });
+        }
+        return Promise.resolve({ organizerId: event.organizerId, user: null });
+      });
+
+      const users = await Promise.all(userPromises);
+      const organizersData = {};
+      users.forEach(({ organizerId, user }) => {
+        if (user) {
+          organizersData[organizerId] = user;
+        }
+      });
+
+      setOrganizers(organizersData);
+    }
+
+    if (events.length > 0) {
+      fetchOrganizers();
+    }
+  }, [events]);
+
+  const handleSearch = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+
+    const filtered = posts.filter((post) =>
+      post.title.toLowerCase().includes(query) ||
+      post.content.toLowerCase().includes(query)
+    );
+    setFilteredPosts(filtered);
   };
 
-  // Handle category filter change
-  const handleCategoryChange = (category) => {
-    setCategory(category);
-    setPage(1); // Reset to first page when category changes
-  };
-
-  const handleCreatePostClick = () => {
-    navigate('/create-post'); // Navigate to the CreatePostPage
+  const handleSortChange = (value) => {
+    const sortedPosts = [...filteredPosts].sort((a, b) => {
+      if (value === "latest") {
+        return new Date(b.time) - new Date(a.time);
+      } else if (value === "oldest") {
+        return new Date(a.time) - new Date(b.time);
+      }
+      return 0;
+    });
+    setFilteredPosts(sortedPosts);
   };
 
   return (
     <UserLayout>
-      <Layout style={{ padding: '24px', background: '#f0f2f5' }}>
-        <Sider width={220} className="site-layout-background" style={{ background: '#fff', padding: '20px', borderRadius: '8px' }}>
-          <Title level={4} style={{ color: '#000', marginBottom: '16px' }}>Danh Mục</Title>
-          <Menu
-            mode="inline"
-            selectedKeys={[category]} // Highlight selected category
-            style={{ borderRight: 0 }}
-          >
-            {categories.map((cat, index) => (
-              <Menu.Item key={cat} onClick={() => handleCategoryChange(cat)} style={{ fontSize: '16px' }}>
-                {cat}
-              </Menu.Item>
-            ))}
-          </Menu>
-        </Sider>
-        <Layout style={{ padding: '0 24px 24px' }}>
-          <Content style={{ padding: '24px', minHeight: 280, background: '#fff', borderRadius: '8px' }}>
-            <Title level={3} style={{ color: '#1890ff', marginBottom: '20px' }}>Bài Viết Mới Nhất</Title>
-
-            {/* Search Bar */}
-            <Search
-              placeholder="Tìm kiếm bài viết"
-              onSearch={handleSearch}
-              enterButton
-              style={{ marginBottom: '20px', maxWidth: '300px' }}
-            />
-
-            {/* Button to navigate to the Create Post page */}
-            <Button
-              type="primary"
-              onClick={handleCreatePostClick}
-              style={{ marginBottom: '20px' }}
-            >
-              Tạo Bài Viết Mới
-            </Button>
-
-            {/* List of Posts */}
-            <List
-              itemLayout="vertical"
-              size="large"
-              loading={loading}
-              pagination={{
-                current: page,
-                pageSize: 5,
-                total: total,
-                onChange: (page) => setPage(page),
-              }}
-              dataSource={posts}
-              renderItem={post => (
-                <List.Item
-                  key={post.id}
-                  style={{ padding: '16px', border: '1px solid #f0f0f0', borderRadius: '8px', marginBottom: '16px' }}
-                  extra={<img width={180} alt="ảnh bìa bài viết" src={post.imageUrl || "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/FPT_logo_2010.svg/1200px-FPT_logo_2010.svg.png"} style={{ borderRadius: '8px' }} />}
-                >
-                  <List.Item.Meta
-                    title={<Link to={`/post/${post.postId}`} style={{ fontSize: '18px', color: '#1890ff' }}>{post.title}</Link>}
-                    description={<Text style={{ color: '#595959' }}>{post.content}</Text>}
-                  />
-                </List.Item>
+      <Row gutter={[16, 16]}>
+        <PostSection
+          posts={filteredPosts}
+          searchQuery={searchQuery}
+          onSearch={handleSearch}
+          onSortChange={handleSortChange}
+        />
+        
+        <Col span={12}>
+          <Row gutter={[16, 16]}>
+            <SectionList
+              title="Sự kiện"
+              items={events.slice(0, 3)}
+              renderItem={(event) => (
+                <EventCard
+                  key={event.eventId}
+                  event={event}
+                  organizer={organizers[event.organizerId]}
+                  onClick={() => navigate(`/event/${event.eventId}`)}
+                />
               )}
+              viewAllPath="/list-event"
             />
-          </Content>
-        </Layout>
-      </Layout>
+
+            <SectionList
+              title="Tuyển dụng"
+              items={jobs.slice(0, 2)}
+              renderItem={(job) => (
+                <JobCard
+                  key={job.jobPostId}
+                  job={job}
+                  onClick={() => navigate(`/user-job-post/${job.jobPostId}`)}
+                />
+              )}
+              viewAllPath="/list-job"
+            />
+          </Row>
+        </Col>
+      </Row>
     </UserLayout>
   );
-};
+}
 
 export default HomePage;

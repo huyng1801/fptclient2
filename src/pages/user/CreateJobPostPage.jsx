@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Select, Switch, Typography, message, InputNumber } from 'antd';
-import JobPostService from '../../services/JobPostService'; // Import JobPostService
-import MajorCodeService from '../../services/MajorCodeService'; // Import MajorCodeService
-import HeaderComponent from "../../components/HeaderComponent";
-import FooterComponent from "../../components/FooterComponent";
-import { Container } from "react-bootstrap";
+import { Form, Input, Button, Select, Typography, message, InputNumber, Card, Row, Col, Space, Tag } from 'antd';
+import { UserOutlined, DollarOutlined, EnvironmentOutlined, FileTextOutlined, BulbOutlined, GiftOutlined } from '@ant-design/icons';
+import JobPostService from '../../services/JobPostService';
+import MajorCodeService from '../../services/MajorCodeService';
+import UserLayout from '../../layouts/UserLayout/UserLayout';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
+const { Option } = Select;
 
 const CreateJobPostPage = () => {
   const [form] = Form.useForm();
   const [majors, setMajors] = useState([]);
   const [status, setStatus] = useState('Draft');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchMajors = async () => {
       try {
         const response = await MajorCodeService.getAllMajorCodes();
-        setMajors(response.items || []); // Safeguard for undefined `items`
+        setMajors(response.items || []);
       } catch (error) {
         message.error('Lỗi khi tải danh sách chuyên ngành!');
         console.error('Error fetching majors:', error);
@@ -28,6 +29,7 @@ const CreateJobPostPage = () => {
   }, []);
 
   const handleFinish = async (values) => {
+    setLoading(true);
     const jobPostData = {
       jobTitle: values.title,
       jobDescription: values.description,
@@ -36,126 +38,277 @@ const CreateJobPostPage = () => {
       location: values.location,
       requirements: values.requirements,
       benefits: values.benefits,
-      time: new Date(), // Current time or pick from form
+      time: new Date(),
       status: status,
       email: values.email,
-      userId: JSON.parse(sessionStorage.getItem('userInfo'))?.userId || 0, // Replace with dynamic user ID logic if available
+      userId: JSON.parse(sessionStorage.getItem('userInfo'))?.userId || 0,
       majorId: values.majorId,
     };
 
     try {
-      const response = await JobPostService.createJobPost(jobPostData);
+      await JobPostService.createJobPost(jobPostData);
       message.success('Công việc đã được tạo thành công!');
       form.resetFields();
-      console.log('Job post created:', response);
     } catch (error) {
       message.error('Lỗi khi tạo công việc!');
       console.error('Error creating job post:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const styles = {
+   
+    subtitle: {
+      fontSize: '16px',
+      color: '#666',
+    },
+    card: {
+      borderRadius: '16px',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+      border: '1px solid #f0f0f0',
+    },
+    formSection: {
+      marginBottom: '32px',
+      padding: '24px',
+
+      borderRadius: '8px',
+    },
+    sectionTitle: {
+      fontSize: '18px',
+      fontWeight: '600',
+      marginBottom: '24px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    submitButton: {
+      height: '48px',
+      fontSize: '16px',
+      fontWeight: '500',
+      width: '100%',
+      borderRadius: '8px',
+    },
+  };
+
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <HeaderComponent />
-      <Container>
-        <Title level={2}>Tạo Công Việc Mới</Title>
-        <Form form={form} layout="vertical" onFinish={handleFinish}>
-          <Form.Item
-            name="title"
-            label="Tiêu Đề Công Việc"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
-          >
-            <Input placeholder="Nhập tiêu đề công việc" />
-          </Form.Item>
+    <UserLayout>
 
-          <Form.Item
-            name="description"
-            label="Mô Tả Công Việc"
-            rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
-          >
-            <TextArea rows={4} placeholder="Nhập mô tả công việc" />
-          </Form.Item>
 
-          <Form.Item
-            name="minSalary"
-            label="Mức Lương Thấp Nhất"
-            rules={[{ type: 'number', min: 0, message: 'Mức lương phải lớn hơn hoặc bằng 0!' }]}
+        <Card style={styles.card}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleFinish}
+            requiredMark={false}
           >
-            <InputNumber min={0} placeholder="Nhập mức lương tối thiểu" style={{ width: '100%' }} />
-          </Form.Item>
+            <div style={styles.formSection}>
+              <Title level={4} style={styles.sectionTitle}>
+                <FileTextOutlined /> Thông tin cơ bản
+              </Title>
+              <Row gutter={24}>
+                <Col span={24}>
+                  <Form.Item
+                    name="title"
+                    label="Tiêu Đề Công Việc"
+                    rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
+                  >
+                    <Input 
+                      prefix={<UserOutlined />}
+                      placeholder="Nhập tiêu đề công việc"
+                      size="large"
+                    />
+                  </Form.Item>
+                </Col>
 
-          <Form.Item
-            name="maxSalary"
-            label="Mức Lương Cao Nhất"
-            rules={[{ type: 'number', min: 0, message: 'Mức lương phải lớn hơn hoặc bằng 0!' }]}
-          >
-            <InputNumber min={0} placeholder="Nhập mức lương tối đa" style={{ width: '100%' }} />
-          </Form.Item>
+                <Col span={24}>
+                  <Form.Item
+                    name="description"
+                    label="Mô Tả Công Việc"
+                    rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
+                  >
+                    <TextArea
+                      rows={4}
+                      placeholder="Nhập mô tả chi tiết về công việc"
+                      size="large"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
 
-          <Form.Item
-            name="location"
-            label="Địa Điểm"
-            rules={[{ required: true, message: 'Vui lòng nhập địa điểm!' }]}
-          >
-            <Input placeholder="Nhập địa điểm" />
-          </Form.Item>
+            <div style={styles.formSection}>
+              <Title level={4} style={styles.sectionTitle}>
+                <DollarOutlined /> Thông tin lương
+              </Title>
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item
+                    name="minSalary"
+                    label="Mức Lương Thấp Nhất"
+                    rules={[{ required: true, message: 'Vui lòng nhập mức lương tối thiểu!' }]}
+                  >
+                    <InputNumber
+                      prefix="₫"
+                      min={0}
+                      style={{ width: '100%' }}
+                      size="large"
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    />
+                  </Form.Item>
+                </Col>
 
-          <Form.Item
-            name="requirements"
-            label="Yêu Cầu"
-          >
-            <TextArea rows={3} placeholder="Nhập các yêu cầu công việc" />
-          </Form.Item>
+                <Col span={12}>
+                  <Form.Item
+                    name="maxSalary"
+                    label="Mức Lương Cao Nhất"
+                    rules={[{ required: true, message: 'Vui lòng nhập mức lương tối đa!' }]}
+                  >
+                    <InputNumber
+                      prefix="₫"
+                      min={0}
+                      style={{ width: '100%' }}
+                      size="large"
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
 
-          <Form.Item
-            name="benefits"
-            label="Quyền Lợi"
-          >
-            <TextArea rows={3} placeholder="Nhập các quyền lợi công việc" />
-          </Form.Item>
+            <div style={styles.formSection}>
+              <Title level={4} style={styles.sectionTitle}>
+                <BulbOutlined /> Yêu cầu và quyền lợi
+              </Title>
+              <Row gutter={24}>
+                <Col span={24}>
+                  <Form.Item
+                    name="requirements"
+                    label="Yêu Cầu"
+                    rules={[{ required: true, message: 'Vui lòng nhập yêu cầu công việc!' }]}
+                  >
+                    <TextArea
+                      rows={4}
+                      placeholder="Nhập các yêu cầu cho ứng viên"
+                      size="large"
+                    />
+                  </Form.Item>
+                </Col>
 
-          <Form.Item
-            name="email"
-            label="Email Liên Hệ"
-            rules={[{ type: 'email', required: true, message: 'Vui lòng nhập email hợp lệ!' }]}
-          >
-            <Input placeholder="Nhập email liên hệ" />
-          </Form.Item>
+                <Col span={24}>
+                  <Form.Item
+                    name="benefits"
+                    label="Quyền Lợi"
+                    rules={[{ required: true, message: 'Vui lòng nhập quyền lợi!' }]}
+                  >
+                    <TextArea
+                      rows={4}
+                      placeholder="Nhập các quyền lợi cho ứng viên"
+                      size="large"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
 
-          <Form.Item
-            name="majorId"
-            label="Chuyên Ngành"
-            rules={[{ required: true, message: 'Vui lòng chọn chuyên ngành!' }]}
-          >
-            <Select placeholder="Chọn chuyên ngành">
-              {majors.map((major) => (
-                <Select.Option key={major.majorId} value={major.majorId}>
-                  {major.majorName}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
+            <div style={styles.formSection}>
+              <Title level={4} style={styles.sectionTitle}>
+                <GiftOutlined /> Thông tin khác
+              </Title>
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item
+                    name="location"
+                    label="Địa Điểm"
+                    rules={[{ required: true, message: 'Vui lòng nhập địa điểm!' }]}
+                  >
+                    <Input
+                      prefix={<EnvironmentOutlined />}
+                      placeholder="Nhập địa điểm làm việc"
+                      size="large"
+                    />
+                  </Form.Item>
+                </Col>
 
-          <Form.Item
-            name="status"
-            label="Trạng Thái"
-          >
-            <Select defaultValue="Draft" onChange={(value) => setStatus(value)}>
-              <Select.Option value="Draft">Nháp</Select.Option>
-              <Select.Option value="Open">Đang Mở</Select.Option>
-              <Select.Option value="Closed">Đã Đóng</Select.Option>
-            </Select>
-          </Form.Item>
+                <Col span={12}>
+                  <Form.Item
+                    name="email"
+                    label="Email Liên Hệ"
+                    rules={[
+                      { required: true, message: 'Vui lòng nhập email!' },
+                      { type: 'email', message: 'Email không hợp lệ!' }
+                    ]}
+                  >
+                    <Input
+                      prefix={<UserOutlined />}
+                      placeholder="Nhập email liên hệ"
+                      size="large"
+                    />
+                  </Form.Item>
+                </Col>
 
-          <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Tạo Công Việc
-            </Button>
-          </Form.Item>
-        </Form>
-      </Container>
-      <FooterComponent />
-    </div>
+                <Col span={12}>
+                  <Form.Item
+                    name="majorId"
+                    label="Chuyên Ngành"
+                    rules={[{ required: true, message: 'Vui lòng chọn chuyên ngành!' }]}
+                  >
+                    <Select
+                      placeholder="Chọn chuyên ngành"
+                      size="large"
+                      showSearch
+                      optionFilterProp="children"
+                    >
+                      {majors.map((major) => (
+                        <Option key={major.majorId} value={major.majorId}>
+                          {major.majorName}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col span={12}>
+                  <Form.Item
+                    name="status"
+                    label="Trạng Thái"
+                    initialValue="Draft"
+                  >
+                    <Select
+                      onChange={(value) => setStatus(value)}
+                      size="large"
+                    >
+                      <Option value="Draft">
+                        <Tag color="orange">Nháp</Tag>
+                      </Option>
+                      <Option value="Open">
+                        <Tag color="green">Đang Mở</Tag>
+                      </Option>
+                      <Option value="Closed">
+                        <Tag color="red">Đã Đóng</Tag>
+                      </Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
+
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                style={styles.submitButton}
+              >
+                Tạo Công Việc
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+
+    </UserLayout>
   );
 };
 

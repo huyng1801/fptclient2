@@ -1,15 +1,64 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Typography, Spin, Alert, Input, Button, Row, Col, Select } from "antd";
-import { PagingListItem } from "../../components/PagingListItem"; // Import PagingListItem
-import { MainBodyListItem } from "../../components/MainBodyListItem"; // Adjust as needed
-
+import { PagingListItem } from "../../components/PagingListItem";
+import { PostCard } from "../../components/PostSection/PostCard";
 import PostService from "../../services/PostService";
-import UserLayout from "../../layouts/UserLayout";
+import UserLayout from "../../layouts/UserLayout/UserLayout";
 
 const { Option } = Select;
 
-// ListPostPage Component
+const styles = {
+
+  errorAlert: {
+    marginBottom: 20
+  },
+  loadingContainer: {
+    textAlign: "center",
+    marginTop: 50
+  },
+  filterSection: {
+    backgroundColor: "#ffffff",
+    padding: "20px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    marginTop: "50px"
+  },
+  filterTitle: {
+    fontSize: "18px",
+    fontWeight: "bold",
+    marginBottom: "15px",
+    color: "#1a1a1a"
+  },
+  searchInput: {
+    marginBottom: "15px"
+  },
+  categoryButton: {
+    marginBottom: "10px",
+    width: "100%",
+    textAlign: "left"
+  },
+  sortSection: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginBottom: "20px"
+  },
+  postGrid: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "20px"
+  },
+  postItem: {
+    width: "100%"
+  }
+};
+
+const categories = [
+  { key: "tech", label: "Công nghệ" },
+  { key: "health", label: "Sức khỏe" },
+  { key: "business", label: "Kinh doanh" }
+];
+
 function ListPostPage() {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +70,6 @@ function ListPostPage() {
   const itemsPerPage = 6;
   const navigate = useNavigate();
 
-  // Fetch posts whenever the currentPage, filter, or sort changes
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
@@ -36,11 +84,10 @@ function ListPostPage() {
           pagingModel,
           sort
         );
-        console.log(response);
         setPosts(response.items);
         setTotalPages(response.totalPages);
       } catch (err) {
-        setError("Failed to fetch posts.");
+        setError("Không thể tải bài viết. Vui lòng thử lại sau.");
       } finally {
         setLoading(false);
       }
@@ -49,17 +96,14 @@ function ListPostPage() {
     fetchPosts();
   }, [currentPage, filter, sort]);
 
-  // Handle post item click
   const handlePostClick = (postId) => {
     navigate(`/post/${postId}`);
   };
 
-  // Handle page change (used by PagingListItem component)
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  // Handle filter change (e.g., category or search input)
   const handleFilterChange = (value, type) => {
     setFilter((prev) => ({
       ...prev,
@@ -67,12 +111,10 @@ function ListPostPage() {
     }));
   };
 
-  // Handle sorting change
   const handleSortChange = (value) => {
     setSort(value);
   };
 
-  // Handle category item click
   const handleCategoryClick = (category) => {
     setFilter((prev) => ({
       ...prev,
@@ -82,123 +124,84 @@ function ListPostPage() {
 
   return (
     <UserLayout>
-      <div style={{ padding: "20px" }}>
-        {/* Show error message if fetching fails */}
         {error && (
           <Alert
             message={error}
             type="error"
             showIcon
-            style={{ marginBottom: 20 }}
+            style={styles.errorAlert}
           />
         )}
 
-        {/* Loading spinner */}
         {loading ? (
-          <div style={{ textAlign: "center", marginTop: 50 }}>
+          <div style={styles.loadingContainer}>
             <Spin size="large" />
           </div>
         ) : (
-          <div>
-            <Row gutter={[16, 16]}>
-              {/* Filter Section (Left) */}
-              <Col xs={24} sm={24} md={8} lg={6}>
-                <div style={filterSectionStyle}>
-                  {/* Category Filter as List of Clickable Items */}
-                  <div style={{ marginBottom: "20px" }}>
-                    {/* Search Filter */}
-                    <Input
-                      placeholder="Search posts"
-                      value={filter.search}
-                      onChange={(e) =>
-                        handleFilterChange(e.target.value, "search")
-                      }
-                      style={filterInputStyle}
-                    />
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={24} md={8} lg={6}>
+              <div style={styles.filterSection}>
+                <h3 style={styles.filterTitle}>Bộ lọc</h3>
+                <Input
+                  placeholder="Tìm kiếm bài viết"
+                  value={filter.search}
+                  onChange={(e) => handleFilterChange(e.target.value, "search")}
+                  style={styles.searchInput}
+                />
 
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      {["tech", "health", "business"].map((category) => (
-                        <Button
-                          key={category}
-                          type={
-                            filter.category === category ? "primary" : "default"
-                          }
-                          onClick={() => handleCategoryClick(category)}
-                          style={{ marginBottom: "10px" }}
-                        >
-                          {category.charAt(0).toUpperCase() + category.slice(1)}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Col>
-
-              {/* Posts Section (Right) */}
-              <Col xs={24} sm={24} md={16} lg={18}>
-                <div style={postsSectionStyle}>
-                  {/* Sort Section */}
-                  <div style={sortSectionStyle}>
-                    <Select
-                      defaultValue={sort}
-                      onChange={handleSortChange}
-                      style={{ width: "200px" }}
+                <div>
+                  <h4 style={styles.filterTitle}>Danh mục</h4>
+                  {categories.map(({ key, label }) => (
+                    <Button
+                      key={key}
+                      type={filter.category === key ? "primary" : "default"}
+                      onClick={() => handleCategoryClick(key)}
+                      style={styles.categoryButton}
                     >
-                      <Option value="dateDesc">Sort by Date (Newest)</Option>
-                      <Option value="dateAsc">Sort by Date (Oldest)</Option>
-                      <Option value="titleAsc">Sort by Title (A-Z)</Option>
-                      <Option value="titleDesc">Sort by Title (Z-A)</Option>
-                    </Select>
-                  </div>
-
-                  <div
-                    style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}
-                  >
-                    {/* Render posts */}
-                    {posts.map((post) => (
-                      <div key={post.postId} style={{ width: "100%" }}>
-                        <MainBodyListItem
-                          item={post}
-                          onClick={() => handlePostClick(post.postId)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Pagination controls */}
-                  <PagingListItem
-                    handlePageChange={handlePageChange}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                  />
+                      {label}
+                    </Button>
+                  ))}
                 </div>
-              </Col>
-            </Row>
-          </div>
+              </div>
+            </Col>
+
+            <Col xs={24} sm={24} md={16} lg={18}>
+              <div style={styles.postsSection}>
+                <div style={styles.sortSection}>
+                  <Select
+                    defaultValue={sort}
+                    onChange={handleSortChange}
+                    style={{ width: "200px" }}
+                  >
+                    <Option value="dateDesc">Mới nhất</Option>
+                    <Option value="dateAsc">Cũ nhất</Option>
+                    <Option value="titleAsc">Tên A-Z</Option>
+                    <Option value="titleDesc">Tên Z-A</Option>
+                  </Select>
+                </div>
+
+                <div style={styles.postGrid}>
+                  {posts.map((post) => (
+                    <div key={post.postId} style={styles.postItem}>
+                      <PostCard
+                        item={post}
+                        onClick={() => handlePostClick(post.postId)}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <PagingListItem
+                  handlePageChange={handlePageChange}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                />
+              </div>
+            </Col>
+          </Row>
         )}
-      </div>
     </UserLayout>
   );
 }
-
-// Styles for the filter and posts section
-const filterSectionStyle = {
-  paddingTop: "15px",
-};
-
-const filterInputStyle = {
-  width: "100%",
-  marginBottom: "10px",
-};
-
-const postsSectionStyle = {
-  padding: "15px",
-};
-
-const sortSectionStyle = {
-  display: "flex",
-  justifyContent: "flex-end",
-  marginBottom: "20px",
-};
 
 export default ListPostPage;

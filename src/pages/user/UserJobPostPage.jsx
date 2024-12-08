@@ -1,9 +1,40 @@
 import React, { useState } from 'react';
-import { Layout, Typography, Button, Card, Row, Col, Spin, notification } from 'antd';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
-import UserLayout from '../../layouts/UserLayout'; // Make sure this layout exists
+import { Layout, Typography, Button, Row, Col, Spin, notification, Input } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import UserLayout from '../../layouts/UserLayout/UserLayout';
+import JobCard from '../../components/JobCard/JobCard';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
+
+const styles = {
+  container: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '24px',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '32px',
+  },
+  title: {
+    margin: 0,
+  },
+  searchBar: {
+    marginBottom: '24px',
+  },
+  searchInput: {
+    borderRadius: '8px',
+    height: '40px',
+  },
+  createButton: {
+    height: '40px',
+    borderRadius: '8px',
+    fontWeight: '500',
+  },
+};
 
 const UserJobPostPage = () => {
   const [jobPosts] = useState([
@@ -34,73 +65,74 @@ const UserJobPostPage = () => {
   ]);
 
   const [loading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
-  const navigate = useNavigate(); // Initialize the navigation hook
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleViewDetails = (jobId) => {
+    navigate(`/user-job-post/${jobId}`);
+  };
+
+  const handleApply = (jobId) => {
+    notification.success({
+      message: 'Đăng Ký Thành Công',
+      description: 'Đơn đăng ký của bạn đã được gửi thành công!',
+    });
+  };
+
+  const filteredJobs = jobPosts.filter(job =>
+    job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    job.location.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) {
-    return <Spin size="large" style={{ margin: '50px auto', display: 'block' }} />;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" />
+      </div>
+    );
   }
-
-  // Navigate to Create Job Post Page
-  const handleCreateJobPostClick = () => {
-    navigate('/create-job-post'); // Navigate to the create job post page
-  };
 
   return (
     <UserLayout>
-      <Layout style={{ padding: '0 50px' }}>
-        <Title level={2}>Danh Sách Việc Làm</Title>
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <Title level={2} style={styles.title}>Danh Sách Việc Làm</Title>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/create-job-post')}
+            style={styles.createButton}
+          >
+            Tạo Việc Làm Mới
+          </Button>
+        </div>
 
-        {/* Button to create new job post */}
-        <Button
-          type="primary"
-          onClick={handleCreateJobPostClick}
-          style={{ 
-            marginBottom: '20px', 
-            width: '200px', // Limit the width of the button
-            textOverflow: 'ellipsis', // To handle text overflow if needed
-            overflow: 'hidden'
-          }}
-        >
-          Tạo Việc Làm Mới
-        </Button>
+        <div style={styles.searchBar}>
+          <Input
+            placeholder="Tìm kiếm việc làm..."
+            prefix={<SearchOutlined />}
+            value={searchQuery}
+            onChange={handleSearch}
+            style={styles.searchInput}
+          />
+        </div>
 
-
-        <Row gutter={[16, 16]}>
-          {jobPosts.length === 0 ? (
-            <Text type="danger">Không có việc làm nào!</Text>
-          ) : (
-            jobPosts.map(job => (
-              <Col span={8} key={job.jobPostId}>
-                <Card
-                  title={job.jobTitle}
-                  extra={<Link to={`/user-job-post/${job.jobPostId}`}>Xem Chi Tiết</Link>}
-                  style={{ marginBottom: '20px' }}
-                >
-                  <Text>{job.location}</Text>
-                  <br />
-                  <Text type="secondary">{new Date(job.createdAt).toLocaleDateString()}</Text>
-                  <br />
-                  <Text strong>{job.minSalary} - {job.maxSalary} VND</Text>
-                  <br />
-                  <Button
-                    type="primary"
-                    style={{ marginTop: '10px' }}
-                    onClick={() => {
-                      notification.success({
-                        message: 'Đăng Ký Thành Công',
-                        description: 'Đơn đăng ký của bạn đã được gửi thành công!',
-                      });
-                    }}
-                  >
-                    Nộp Đơn
-                  </Button>
-                </Card>
-              </Col>
-            ))
-          )}
+        <Row gutter={[24, 24]}>
+          {filteredJobs.map(job => (
+            <Col xs={24} sm={24} md={12} lg={8} key={job.jobPostId}>
+              <JobCard
+                job={job}
+                onViewDetails={handleViewDetails}
+                onApply={handleApply}
+              />
+            </Col>
+          ))}
         </Row>
-      </Layout>
+      </div>
     </UserLayout>
   );
 };

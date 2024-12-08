@@ -1,16 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Card, Button, Typography, Input } from "antd";
+import { Row, Col, Input, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
-import {
-  EnvironmentOutlined,
-  ClockCircleOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import UserLayout from "../../layouts/UserLayout"; // Assuming the path to UserLayout
+import UserLayout from "../../layouts/UserLayout/UserLayout";
 import EventService from "../../services/EventService";
 import UserService from "../../services/UserService";
+import EventCard from "../../components/EventCard/EventCard";
 
 const { Title, Text } = Typography;
+
+const styles = {
+  header: {
+    marginBottom: '32px',
+  },
+  title: {
+    fontSize: '28px',
+    fontWeight: '600',
+    marginBottom: '16px',
+  },
+  subtitle: {
+    fontSize: '16px',
+    color: '#666',
+  },
+  searchInput: {
+    width: '100%',
+    borderRadius: '8px',
+    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+    marginBottom: '32px',
+    height: '48px',
+    fontSize: '16px',
+  }
+};
 
 function ListEventPage() {
   const [events, setEvents] = useState([]);
@@ -24,23 +43,16 @@ function ListEventPage() {
         const fetchedEvents = await EventService.getAllEvents();
         setEvents(fetchedEvents.items);
 
-        // Fetch organizers for events
         const userPromises = fetchedEvents.items.map((event) => {
           if (event.organizerId) {
             return UserService.getUser(event.organizerId)
               .then((user) => ({ organizerId: event.organizerId, user }))
               .catch((error) => {
-                console.error(
-                  `Error fetching user with ID ${event.organizerId}:`,
-                  error
-                );
+                console.error(`Error fetching user with ID ${event.organizerId}:`, error);
                 return { organizerId: event.organizerId, user: null };
               });
           }
-          return Promise.resolve({
-            organizerId: event.organizerId,
-            user: null,
-          });
+          return Promise.resolve({ organizerId: event.organizerId, user: null });
         });
 
         const users = await Promise.all(userPromises);
@@ -61,8 +73,7 @@ function ListEventPage() {
   }, []);
 
   const handleSearch = (e) => {
-    const query = e.target.value.toLowerCase();
-    setSearchQuery(query);
+    setSearchQuery(e.target.value.toLowerCase());
   };
 
   const filteredEvents = events.filter((event) =>
@@ -71,65 +82,33 @@ function ListEventPage() {
 
   return (
     <UserLayout>
-      <Row gutter={[16, 16]}>
-        {/* Event Search Section */}
-        <Col span={24}>
-          <Input
-            placeholder="Tìm kiếm sự kiện"
-            value={searchQuery}
-            onChange={handleSearch}
-            style={{
-              width: "100%",
-              borderRadius: "8px",
-              boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-              marginBottom: "20px",
-            }}
-          />
-        </Col>
+        <div style={styles.header}>
+          <Title level={2} style={styles.title}>
+            Khám phá sự kiện
+          </Title>
+          <Text style={styles.subtitle}>
+            Tìm kiếm và tham gia các sự kiện thú vị
+          </Text>
+        </div>
 
-        {/* Event List Section */}
-        <Col span={24}>
-          <Row gutter={[16, 16]}>
-            {filteredEvents.map((event) => (
-              <Col span={12}>
-                 <Card
-                    key={event.eventId}
-                    hoverable
-                    style={{
-                      marginBottom: "20px",
-                      borderRadius: "12px",
-                      boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                    }}
-                    onClick={() => navigate(`/event/${event.eventId}`)}
-                  >
-                    <Card.Meta
-                      title={<a>{event.eventName}</a>}
-                      description={event.description}
-                    />
-                    <div style={{ marginTop: "10px", fontSize: "14px" }}>
-                      <Text>
-                        <ClockCircleOutlined /> Thời gian: {event.time}
-                      </Text>
-                      <br />
-                      <Text>
-                        <EnvironmentOutlined /> Địa điểm: {event.location}
-                      </Text>
-                      <br />
-                      <Text>
-                        <UserOutlined /> Người tổ chức:{" "}
-                        {organizers[event.organizerId]
-                          ? `${organizers[event.organizerId]?.firstName} ${
-                              organizers[event.organizerId]?.lastName
-                            }`
-                          : "Loading..."}
-                      </Text>
-                    </div>
-                  </Card>
-              </Col>
-            ))}
-          </Row>
-        </Col>
-      </Row>
+        <Input
+          placeholder="Tìm kiếm sự kiện"
+          value={searchQuery}
+          onChange={handleSearch}
+          style={styles.searchInput}
+        />
+
+        <Row gutter={[24, 24]}>
+          {filteredEvents.map((event) => (
+            <Col key={event.eventId} xs={24} sm={24} md={12} lg={12} xl={8}>
+              <EventCard
+                event={event}
+                organizer={organizers[event.organizerId]}
+                onClick={() => navigate(`/event/${event.eventId}`)}
+              />
+            </Col>
+          ))}
+        </Row>
     </UserLayout>
   );
 }

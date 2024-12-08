@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Button, Card, Form } from "react-bootstrap";
 import { Box, Typography, TextField } from "@mui/material";
-import HeaderComponent from "../../components/HeaderComponent";
-import FooterComponent from "../../components/FooterComponent";
+
+
 import {
   DesktopDateTimePicker,
   LocalizationProvider,
@@ -28,7 +28,7 @@ const RequestDetailPage = () => {
 
   return (
     <div className="d-flex flex-column min-vh-100">
-      <HeaderComponent />
+
       <Box sx={{ paddingTop: "70px", backgroundColor: "#f9f9f9", py: 4 }}>
         <Container>
           <Row className="mb-4">
@@ -102,7 +102,7 @@ const RequestDetailPage = () => {
           </Row>
         </Container>
       </Box>
-      <FooterComponent />
+
     </div>
   );
 };

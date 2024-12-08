@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Select, Switch, Typography, message } from 'antd';
 import { Container } from "react-bootstrap";
-import UserLayout from '../../layouts/UserLayout';
+import UserLayout from '../../layouts/UserLayout/UserLayout';
 import PostService from '../../services/PostService'; // Import the PostService
-import HeaderComponent from "../../components/HeaderComponent";
-import FooterComponent from "../../components/FooterComponent";
 const { Title } = Typography;
 const { TextArea } = Input;
 
@@ -31,7 +29,7 @@ const CreatePostPage = () => {
 
   return (
     <div className="d-flex flex-column min-vh-100">
-      <HeaderComponent />
+
       <Container>
         <Title level={2}>Tạo Bài Viết Mới</Title>
         <Form
@@ -79,7 +77,7 @@ const CreatePostPage = () => {
           </Form.Item>
         </Form>
         </Container>
-        <FooterComponent />
+  
     </div>
   );
 };

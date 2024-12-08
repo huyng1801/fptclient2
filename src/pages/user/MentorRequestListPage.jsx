@@ -1,49 +1,23 @@
 import React, { useState } from "react";
-import { Row, Col, Card, Pagination } from "react-bootstrap";
-import { Typography } from "@mui/material";
-import { Button } from "antd"; // Importing Ant Design Button
-import { RightOutlined } from "@ant-design/icons"; // Importing Ant Design icons
-import UserLayout from "../../layouts/UserLayout"; // Assuming the path to UserLayout
+import { Typography, Pagination } from "antd";
 import { useNavigate } from "react-router-dom";
+import UserLayout from "../../layouts/UserLayout/UserLayout";
+import RequestCard from "../../components/MentorRequest/RequestCard";
 
-export const MainBodyListItem = ({ item, onClick }) => {
-  return (
-    <Card className="mb-3 shadow-sm" style={{ borderRadius: "10px", boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}>
-      <Card.Body>
-        <Row>
-          <Col>
-            <Card.Title className="text-primary" style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
-              {item.name}
-            </Card.Title>
-            <Card.Text className="mb-4" style={{ color: "#555" }}>Yêu cầu: {item.request}</Card.Text>
-            <Card.Text className="mb-1" style={{ color: "#888" }}>Phản hồi: {item.comment}</Card.Text>
-          </Col>
+const { Title } = Typography;
 
-          <Col md="auto" className="d-flex align-items-center">
-            {/* Using Ant Design Button with an icon */}
-            <Button
-              type="primary"
-              icon={<RightOutlined />}
-              onClick={onClick}
-              style={{
-                borderRadius: "5px",
-                padding: "6px 20px",
-                backgroundColor: "#FFB400",
-                borderColor: "#FFB400",
-                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              Đặt lịch hẹn
-            </Button>
-          </Col>
-        </Row>
-      </Card.Body>
-    </Card>
-  );
+const styles = {
+  content: {
+    marginBottom: '32px',
+  },
+  pagination: {
+    textAlign: 'center',
+    marginTop: '32px',
+  },
 };
 
 function MentorRequestListPage() {
-  const posts = [
+  const requests = [
     { name: "Tên 1", request: "Yêu cầu 1", comment: "Phản hồi 1" },
     { name: "Tên 2", request: "Yêu cầu 2", comment: "Phản hồi 2" },
     { name: "Tên 3", request: "Yêu cầu 3", comment: "Phản hồi 3" },
@@ -57,51 +31,44 @@ function MentorRequestListPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
-  const totalPages = Math.ceil(posts.length / itemsPerPage);
-  const currentItem = posts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const navigate = useNavigate();
+
+  const getCurrentItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return requests.slice(startIndex, startIndex + itemsPerPage);
+  };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  const navigate = useNavigate();
   const handleBookSchedule = () => {
     navigate("/request/1");
   };
 
   return (
     <UserLayout>
-      <Typography
-        variant="h4"
-        align="center"
-        className="mb-4"
-        style={{ fontWeight: "bold", color: "#FFB400", textTransform: "uppercase" }}
-      >
-        Chi Tiết Yêu Cầu
-      </Typography>
-      <Row className="mb-4 justify-content-center">
-        <Col md={8}>
-          {currentItem.map((item, index) => (
-            <MainBodyListItem
+      
+
+        <div style={styles.content}>
+          {getCurrentItems().map((request, index) => (
+            <RequestCard
               key={index}
+              request={request}
               onClick={handleBookSchedule}
-              item={item}
             />
           ))}
+        </div>
+
+        <div style={styles.pagination}>
           <Pagination
-            className="mt-3 justify-content-end"
             current={currentPage}
-            total={posts.length}
+            total={requests.length}
             pageSize={itemsPerPage}
             onChange={handlePageChange}
             showSizeChanger={false}
-            style={{ display: "flex", justifyContent: "center" }}
           />
-        </Col>
-      </Row>
+        </div>
     </UserLayout>
   );
 }

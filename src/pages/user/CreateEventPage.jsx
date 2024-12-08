@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, DatePicker, InputNumber, notification, Select } from 'antd';
-import UserLayout from '../../layouts/UserLayout'; // Adjust the import path as needed
+import UserLayout from '../../layouts/UserLayout/UserLayout'; // Adjust the import path as needed
 import moment from 'moment';
 
 const { Option } = Select;

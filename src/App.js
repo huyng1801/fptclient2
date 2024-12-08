@@ -21,7 +21,6 @@ import CreatePostPage from "./pages/user/CreatePostPage";
 import CreateJobPostPage from "./pages/user/CreateJobPostPage";
 import CreateEventPage from "./pages/user/CreateEventPage";
 import LoginPage from "./pages/user/LoginPage";
-import HomePageV2 from "./pages/user/HomePageV2";
 import ListPostPage from "./pages/user/ListPostPage";
 import ListEventPage from "./pages/user/ListEventPage";
 import EventDetailsPageV2 from "./pages/user/EventDetailsPageV2";
@@ -36,7 +35,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePageV2 />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/list-post" element={<ListPostPage />} />
