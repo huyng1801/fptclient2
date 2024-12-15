@@ -125,7 +125,11 @@ function PostDetailsPageV2() {
           setAuthor(authorData);
         }
 
-        const commentsData = await CommentService.viewAllComments({ postId });
+        const commentsData = await CommentService.viewAllComments({ 
+          postId, 
+          size: 1000
+        });
+        
         const organizedComments = commentsData.items.reduce((acc, comment) => {
           if (!comment.parentCommentId) {
             if (!acc.find((c) => c.commentId === comment.commentId)) {

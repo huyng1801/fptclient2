@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Layout, Typography, Button, Row, Col, Spin, notification, Input } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import UserLayout from '../../layouts/UserLayout/UserLayout';
 import JobCard from '../../components/JobCard/JobCard';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import JobPostService from '../../services/JobPostService';
+import useFetchData from '../../hooks/useFetchData';
 
 const { Title } = Typography;
 
@@ -34,37 +36,22 @@ const styles = {
     borderRadius: '8px',
     fontWeight: '500',
   },
+  loadingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+  },
+  noResults: {
+    textAlign: 'center',
+    padding: '48px',
+    color: '#666',
+    fontSize: '16px',
+  },
 };
 
 const UserJobPostPage = () => {
-  const [jobPosts] = useState([
-    {
-      jobPostId: 1,
-      jobTitle: 'Lập Trình Viên Frontend',
-      location: 'Hà Nội, Việt Nam',
-      createdAt: '2024-10-15',
-      minSalary: 10000000,
-      maxSalary: 15000000,
-    },
-    {
-      jobPostId: 2,
-      jobTitle: 'Lập Trình Viên Backend',
-      location: 'Thành phố Hồ Chí Minh, Việt Nam',
-      createdAt: '2024-10-10',
-      minSalary: 12000000,
-      maxSalary: 17000000,
-    },
-    {
-      jobPostId: 3,
-      jobTitle: 'Thiết Kế UI/UX',
-      location: 'Đà Nẵng, Việt Nam',
-      createdAt: '2024-10-12',
-      minSalary: 8000000,
-      maxSalary: 12000000,
-    },
-  ]);
-
-  const [loading] = useState(false);
+  const { data: jobPosts, loading, error } = useFetchData(JobPostService.getAllJobPosts);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
@@ -83,18 +70,37 @@ const UserJobPostPage = () => {
     });
   };
 
-  const filteredJobs = jobPosts.filter(job =>
-    job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleCreateJob = () => {
+    navigate('/create-job-post');
+  };
+
+  const getFilteredJobs = () => {
+    if (!jobPosts) return [];
+    
+    return jobPosts.filter(job =>
+      job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.location?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  if (error) {
+    notification.error({
+      message: 'Lỗi',
+      description: 'Không thể tải danh sách việc làm. Vui lòng thử lại sau.',
+    });
+  }
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Spin size="large" />
-      </div>
+      <UserLayout>
+        <div style={styles.loadingContainer}>
+          <Spin size="large" />
+        </div>
+      </UserLayout>
     );
   }
+
+  const filteredJobs = getFilteredJobs();
 
   return (
     <UserLayout>
@@ -104,7 +110,7 @@ const UserJobPostPage = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => navigate('/create-job-post')}
+            onClick={handleCreateJob}
             style={styles.createButton}
           >
             Tạo Việc Làm Mới
@@ -118,20 +124,29 @@ const UserJobPostPage = () => {
             value={searchQuery}
             onChange={handleSearch}
             style={styles.searchInput}
+            allowClear
           />
         </div>
 
-        <Row gutter={[24, 24]}>
-          {filteredJobs.map(job => (
-            <Col xs={24} sm={24} md={12} lg={8} key={job.jobPostId}>
-              <JobCard
-                job={job}
-                onViewDetails={handleViewDetails}
-                onApply={handleApply}
-              />
-            </Col>
-          ))}
-        </Row>
+        {filteredJobs.length > 0 ? (
+          <Row gutter={[24, 24]}>
+            {filteredJobs.map(job => (
+              <Col xs={24} sm={24} md={12} lg={8} key={job.jobPostId}>
+                <JobCard
+                  job={job}
+                  onClick={() => handleViewDetails(job.jobPostId)}
+                  onApply={() => handleApply(job.jobPostId)}
+                />
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <div style={styles.noResults}>
+            {searchQuery 
+              ? 'Không tìm thấy việc làm phù hợp với tìm kiếm của bạn'
+              : 'Chưa có việc làm nào được đăng tải'}
+          </div>
+        )}
       </div>
     </UserLayout>
   );

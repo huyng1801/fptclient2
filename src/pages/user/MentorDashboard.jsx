@@ -1,19 +1,16 @@
-import React, { useState } from "react";
-import { Layout, Row, Col, Button, Typography, notification } from "antd";
+import React, { useState, useEffect } from "react";
+import { Layout, Row, Col, Button, Typography, notification, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout/UserLayout";
 import MentorCard from "../../components/MentorDashboard/MentorCard";
 import RequestForm from "../../components/MentorDashboard/RequestForm";
 import { PagingListItem } from "../../components/PagingListItem";
+import UserService from "../../services/UserService";
 
 const { Title } = Typography;
 
 const styles = {
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '24px',
-  },
+
   header: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -31,6 +28,10 @@ const styles = {
   },
   content: {
     marginBottom: '32px',
+    minHeight: '400px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   pagination: {
     textAlign: 'center',
@@ -39,26 +40,41 @@ const styles = {
 };
 
 function MentorDashboardPage() {
-  const mentors = [
-    {
-      img: "/assets/images/logo.png",
-      name: "Tên mentor 1",
-      role: "Role mentor 1",
-      major: "Chuyên ngành mentor 1",
-      rating: "4.9",
-    },
-    // ... rest of the mentors data
-  ];
-
+  const [mentors, setMentors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [formValues, setFormValues] = useState({ title: "", content: "" });
   const navigate = useNavigate();
   const itemsPerPage = 6;
 
-  const getCurrentItems = () => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return mentors.slice(startIndex, startIndex + itemsPerPage);
+  useEffect(() => {
+    fetchMentors();
+  }, [currentPage]);
+
+  const fetchMentors = async () => {
+    try {
+      setLoading(true);
+      const filter = { isMentor: true };
+      const response = await UserService.getAllUsers(filter, { 
+        page: currentPage, 
+        size: itemsPerPage 
+      });
+      
+      setMentors(response.items);
+      setTotalPages(response.totalPages);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      notification.error({
+        message: 'Error',
+        description: 'Failed to load mentors. Please try again later.',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePageChange = (page) => {
@@ -79,17 +95,26 @@ function MentorDashboardPage() {
     setFormValues({ title: "", content: "" });
   };
 
-  const showMentorDashboardDetails = () => {
-    navigate("/mentorDashboard/1");
+  const showMentorDashboardDetails = (mentorId) => {
+    navigate(`/mentorDashboard/${mentorId}`);
   };
+
+  if (error) {
+    return (
+      <UserLayout>
+        <div style={styles.container}>
+          <Title level={4} style={{ color: 'red' }}>
+            Error loading mentors: {error}
+          </Title>
+        </div>
+      </UserLayout>
+    );
+  }
 
   return (
     <UserLayout>
-      <div style={styles.container}>
+      <div>
         <div style={styles.header}>
-          <Title level={2} style={styles.title}>
-            Danh Sách Mentor
-          </Title>
           <Button 
             type="primary" 
             onClick={() => setIsFormModalOpen(true)}
@@ -100,25 +125,31 @@ function MentorDashboardPage() {
         </div>
 
         <div style={styles.content}>
-          <Row gutter={[24, 24]}>
-            {getCurrentItems().map((mentor, index) => (
-              <Col xs={24} md={12} key={index}>
-                <MentorCard
-                  mentor={mentor}
-                  onClick={showMentorDashboardDetails}
-                />
-              </Col>
-            ))}
-          </Row>
+          {loading ? (
+            <Spin size="large" />
+          ) : (
+            <Row gutter={[24, 24]}>
+              {mentors.map((mentor) => (
+                <Col xs={24} md={12} key={mentor.userId}>
+                  <MentorCard
+                    mentor={mentor}
+                    onClick={showMentorDashboardDetails}
+                  />
+                </Col>
+              ))}
+            </Row>
+          )}
         </div>
 
-        <div style={styles.pagination}>
-          <PagingListItem
-            currentPage={currentPage}
-            totalPages={Math.ceil(mentors.length / itemsPerPage)}
-            handlePageChange={handlePageChange}
-          />
-        </div>
+        {!loading && totalPages > 1 && (
+          <div style={styles.pagination}>
+            <PagingListItem
+              currentPage={currentPage}
+              totalPages={totalPages}
+              handlePageChange={handlePageChange}
+            />
+          </div>
+        )}
 
         <RequestForm
           visible={isFormModalOpen}

@@ -10,34 +10,33 @@ const CommentSection = ({ postId, comments: initialComments }) => {
   const [comments, setComments] = useState(organizeComments(initialComments));
   const [newComment, setNewComment] = useState('');
 
-  const handleNewCommentSubmit = async (e) => {
-    e.preventDefault();
-    if (newComment.trim() === '') return;
+ const handleNewCommentSubmit = async () => {
+  if (newComment.trim() === '') return;
 
-    const commentData = {
-      postId,
-      authorId: JSON.parse(sessionStorage.getItem('userInfo'))?.userId || 0,
-      content: newComment,
-      type: 'Comment',
-      parentCommentId: null,
-    };
-
-    try {
-      const response = await CommentService.createNewComment(commentData);
-      const newCommentWithId = { ...commentData, ...response, replies: [] };
-      setComments([newCommentWithId, ...comments]);
-      setNewComment('');
-      notification.success({
-        message: 'Thành công',
-        description: 'Bình luận của bạn đã được đăng thành công.',
-      });
-    } catch (err) {
-      notification.error({
-        message: 'Lỗi',
-        description: 'Đã xảy ra lỗi khi đăng bình luận của bạn.',
-      });
-    }
+  const commentData = {
+    postId,
+    authorId: JSON.parse(sessionStorage.getItem('userInfo'))?.userId || 0,
+    content: newComment,
+    type: 'Comment',
+    parentCommentId: null,
   };
+
+  try {
+    const response = await CommentService.createNewComment(commentData);
+    const newCommentWithId = await CommentService.getCommentById(response);
+    setComments([newCommentWithId, ...comments]);
+    setNewComment('');
+    notification.success({
+      message: 'Thành công',
+      description: 'Bình luận của bạn đã được đăng thành công.',
+    });
+  } catch (err) {
+    notification.error({
+      message: 'Lỗi',
+      description: 'Đã xảy ra lỗi khi đăng bình luận của bạn.',
+    });
+  }
+};
 
   const handleReplySubmit = async (parentCommentId, replyContent) => {
     const replyData = {
@@ -77,16 +76,20 @@ const CommentSection = ({ postId, comments: initialComments }) => {
   };
 
   return (
-    <div style={{ background: '#fff',
+    <div
+      style={{
+        background: '#fff',
         borderRadius: '12px',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         padding: '24px',
-        marginTop: '24px', }}>
+        marginTop: '24px',
+      }}
+    >
       <Title level={4}>Bình luận ({comments.length})</Title>
-
+  
       <div style={{ marginBottom: '16px' }}>
         <Title level={4}>Viết bình luận</Title>
-        <Form onSubmit={handleNewCommentSubmit}>
+        <Form onFinish={handleNewCommentSubmit}>
           <Form.Item style={{ marginBottom: '12px' }}>
             <Input.TextArea
               rows={4}
@@ -101,7 +104,7 @@ const CommentSection = ({ postId, comments: initialComments }) => {
           </Button>
         </Form>
       </div>
-
+  
       {comments.map((comment) => (
         <Comment
           key={comment.commentId}

@@ -1,38 +1,90 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Layout, Typography, Button, Spin, notification, Form, Input } from 'antd';
-import { Container } from "react-bootstrap";
-import { Box } from "@mui/material";
-
-import JobPostService from '../../services/JobPostService'; // Service to interact with API
+import { Typography, Spin, notification, Space, Tag, Descriptions, Form, Input, Button } from 'antd';
+import { 
+  EnvironmentOutlined, 
+  ClockCircleOutlined, 
+  MailOutlined,
+  DollarOutlined,
+  UserOutlined,
+  TagOutlined
+} from '@ant-design/icons';
+import UserLayout from '../../layouts/UserLayout/UserLayout';
+import JobPostService from '../../services/JobPostService';
 
 const { Title, Text, Paragraph } = Typography;
 
+const styles = {
+
+  content: {
+    backgroundColor: '#fff',
+    padding: '32px',
+    borderRadius: '8px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+  },
+  loading: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '60vh',
+  },
+  header: {
+    marginBottom: '24px',
+  },
+  metadata: {
+    display: 'flex',
+    gap: '16px',
+    marginTop: '8px',
+    flexWrap: 'wrap',
+  },
+  section: {
+    marginBottom: '24px',
+  },
+  salaryTag: {
+    fontSize: '16px',
+    padding: '8px 16px',
+    borderRadius: '6px',
+  },
+  infoGrid: {
+    marginTop: '24px',
+    background: '#f5f5f5',
+    padding: '20px',
+    borderRadius: '8px',
+  },
+  statusTag: {
+    marginLeft: '8px',
+  },
+  applicationForm: {
+    marginTop: '32px',
+  }
+};
+
 const UserJobPostDetailsPage = () => {
-  const { id } = useParams(); // Access job post ID from the URL params
+  const { id } = useParams();
   const [jobPost, setJobPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch job post details from the API
   useEffect(() => {
     const fetchJobPost = async () => {
       try {
         const data = await JobPostService.getJobPostById(id);
+  
         setJobPost(data);
-      } catch (error) {
-        console.error('Error fetching job post:', error);
+      } catch (err) {
+        setError(err);
         notification.error({
-          message: 'Lỗi tải dữ liệu',
-          description: 'Không thể tải thông tin tuyển dụng!',
+          message: 'Lỗi',
+          description: 'Không thể tải thông tin việc làm. Vui lòng thử lại sau.',
         });
       } finally {
         setLoading(false);
       }
     };
+
     fetchJobPost();
   }, [id]);
 
-  // Handle job application submission
   const handleApply = async (values) => {
     try {
       await JobPostService.applyToJobPost(id, values);
@@ -41,7 +93,6 @@ const UserJobPostDetailsPage = () => {
         description: 'Đơn ứng tuyển của bạn đã được gửi thành công!',
       });
     } catch (error) {
-      console.error('Error applying for job:', error);
       notification.error({
         message: 'Lỗi ứng tuyển',
         description: 'Không thể gửi đơn ứng tuyển của bạn!',
@@ -50,39 +101,99 @@ const UserJobPostDetailsPage = () => {
   };
 
   if (loading) {
-    return <Spin size="large" style={{ margin: '50px auto', display: 'block' }} />;
+    return (
+      <UserLayout>
+        <div style={styles.loading}>
+          <Spin size="large" />
+        </div>
+      </UserLayout>
+    );
   }
 
-  if (!jobPost) {
-    return <Text type="danger">Không tìm thấy tin tuyển dụng!</Text>;
+  if (error || !jobPost) {
+    return (
+      <UserLayout>
+        <div style={styles.container}>
+          <Text type="danger">Không tìm thấy tin tuyển dụng!</Text>
+        </div>
+      </UserLayout>
+    );
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100">
+    <UserLayout>
+      <div>
+        <div style={styles.content}>
+          {/* Header Section */}
+          <div style={styles.header}>
+            <Title level={2}>
+              {jobPost.jobTitle}
+              <Tag color={jobPost.status === 'Open' ? 'success' : 'default'} style={styles.statusTag}>
+                {jobPost.status}
+              </Tag>
+            </Title>
+            <Space style={styles.metadata}>
+              <Text type="secondary">
+                <EnvironmentOutlined /> {jobPost.location}
+              </Text>
+              <Text type="secondary">
+                <ClockCircleOutlined /> Đăng ngày: {new Date(jobPost.createdAt).toLocaleDateString()}
+              </Text>
+              <Text type="secondary">
+                <MailOutlined /> {jobPost.email}
+              </Text>
+            </Space>
+          </div>
 
+          {/* Salary Section */}
+          <div style={styles.section}>
+            <Tag color="green" style={styles.salaryTag}>
+              <DollarOutlined /> {jobPost.minSalary} - {jobPost.maxSalary} USD
+              {jobPost.isDeal && ' (Có thể thương lượng)'}
+            </Tag>
+          </div>
 
-      <Box sx={{ backgroundColor: "#f9f9f9", py: 4 }}>
-        <Container>
-          <Title level={2}>{jobPost.jobTitle}</Title>
-          <Text type="secondary">{jobPost.location}</Text>
-          <br />
-          <Text type="secondary">Đăng ngày: {new Date(jobPost.createdAt).toLocaleDateString()}</Text>
-          <br /><br />
-          <Paragraph>{jobPost.jobDescription}</Paragraph>
+          {/* Description Section */}
+          <div style={styles.section}>
+            <Title level={4}>Mô tả công việc</Title>
+            <Paragraph>{jobPost.jobDescription}</Paragraph>
+          </div>
 
-          <Title level={4}>Yêu cầu</Title>
-          <Paragraph>{jobPost.requirements || 'Không có yêu cầu.'}</Paragraph>
+          {/* Requirements Section */}
+          <div style={styles.section}>
+            <Title level={4}>Yêu cầu</Title>
+            <Paragraph>{jobPost.requirements}</Paragraph>
+          </div>
 
-          <Title level={4}>Phúc lợi</Title>
-          <Paragraph>{jobPost.benefits || 'Không có phúc lợi.'}</Paragraph>
+          {/* Benefits Section */}
+          <div style={styles.section}>
+            <Title level={4}>Phúc lợi</Title>
+            <Paragraph>{jobPost.benefits}</Paragraph>
+          </div>
 
-          <Title level={4}>Mức lương</Title>
-          <Paragraph>{jobPost.minSalary} - {jobPost.maxSalary} VND</Paragraph>
+          {/* Additional Information */}
+          <div style={styles.infoGrid}>
+            <Descriptions bordered column={1}>
+              <Descriptions.Item label={<><UserOutlined /> Người đăng</>}>
+                {jobPost.createdBy}
+              </Descriptions.Item>
+              <Descriptions.Item label={<><TagOutlined /> Mã công việc</>}>
+                {jobPost.jobPostId}
+              </Descriptions.Item>
+              <Descriptions.Item label="Cập nhật lần cuối">
+                {new Date(jobPost.updatedAt).toLocaleString()}
+              </Descriptions.Item>
+              <Descriptions.Item label="Chuyên ngành">
+                {jobPost.majorId}
+              </Descriptions.Item>
+            </Descriptions>
+          </div>
 
+          {/* Application Form */}
           <Form
             name="applyForm"
             layout="vertical"
-            style={{ marginTop: '20px' }}
+            style={styles.applicationForm}
             onFinish={handleApply}
           >
             <Form.Item
@@ -90,17 +201,18 @@ const UserJobPostDetailsPage = () => {
               name="coverLetter"
               rules={[{ required: true, message: 'Vui lòng nhập thư xin việc của bạn!' }]}
             >
-              <Input.TextArea rows={4} placeholder="Viết thư xin việc của bạn ở đây..." />
+              <Input.TextArea 
+                rows={4} 
+                placeholder="Viết thư xin việc của bạn ở đây..." 
+              />
             </Form.Item>
             <Button type="primary" htmlType="submit">
               Gửi đơn ứng tuyển
             </Button>
           </Form>
-        </Container>
-      </Box>
-
- 
-    </div>
+        </div>
+      </div>
+    </UserLayout>
   );
 };
 

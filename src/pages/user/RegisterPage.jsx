@@ -163,9 +163,9 @@ const RegisterPage = () => {
               onChange={(e) => setRole(e.target.value)}
               required
             >
-              <MenuItem value={2}>Alumni</MenuItem>
-              <MenuItem value={3}>Student</MenuItem>
-              <MenuItem value={5}>Recruiter</MenuItem>
+              <MenuItem value={1}>Alumni</MenuItem>
+              <MenuItem value={2}>Student</MenuItem>
+              <MenuItem value={3}>Recruiter</MenuItem>
             </Select>
           </FormControl>
 
