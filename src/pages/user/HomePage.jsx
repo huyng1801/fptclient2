@@ -5,6 +5,8 @@ import UserLayout from '../../layouts/UserLayout/UserLayout';
 import PostService from '../../services/PostService';
 import EventService from '../../services/EventService';
 import JobPostService from '../../services/JobPostService';
+import UserService from '../../services/UserService';
+import EmailVerificationStatus from '../../components/EmailVerificationStatus/EmailVerificationStatus';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -83,6 +85,8 @@ function HomePage() {
   const [posts, setPosts] = useState([]);
   const [events, setEvents] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,7 +96,13 @@ function HomePage() {
           EventService.getAllEvents(),
           JobPostService.getAllJobPosts()
         ]);
-
+        const storedUserInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
+        if (storedUserInfo.userId) {
+          const userData = await UserService.getUser(storedUserInfo.userId);
+          setUserInfo(userData);
+          // Update the stored user info with the latest data
+          sessionStorage.setItem('userInfo', JSON.stringify(userData));
+        }
         setPosts(postsData.items);
         setEvents(eventsData.items);
         setJobs(jobsData.items);
@@ -105,8 +115,12 @@ function HomePage() {
 
   return (
     <UserLayout>
+       {userInfo && !userInfo.emailVerified && (
+        <EmailVerificationStatus emailVerified={userInfo.emailVerified} />
+      )}
       <div style={styles.banner}>
         <div style={styles.bannerOverlay}>
+       
           <Title level={1} style={{ color: 'white', marginBottom: '24px' }}>
             Kết nối Cựu sinh viên FPT
           </Title>

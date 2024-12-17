@@ -1,9 +1,116 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Typography, Box, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
+import { Layout, Typography, Input, Select, Button, message } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
 import { handleUserRegistration } from '../../services/AuthService';
-import MajorCodeService from '../../services/MajorCodeService'; // Import your service for fetching major codes
-import './RegisterPage.css'; // Add custom styles for the register page
+import MajorCodeService from '../../services/MajorCodeService';
+
+const { Title, Text } = Typography;
+const { Option } = Select;
+
+const styles = {
+  container: {
+    minHeight: '100vh',
+    background: '#f0f2f5',
+    display: 'flex',
+    alignItems: 'stretch',
+  },
+  content: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    display: 'flex',
+    width: '100%',
+    minHeight: '100vh',
+    background: '#fff',
+    borderRadius: '8px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    overflow: 'hidden',
+  },
+  leftSection: {
+    flex: '1 1 50%',
+    background: 'linear-gradient(135deg, #1890ff, #096dd9)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '48px',
+  },
+  rightSection: {
+    flex: '1 1 50%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    padding: '48px',
+    background: '#fff',
+  },
+  registerImage: {
+    width: '100%',
+    maxWidth: '440px',
+    height: 'auto',
+    objectFit: 'contain',
+    marginBottom: '32px',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: '24px',
+    textAlign: 'center',
+    maxWidth: '80%',
+    lineHeight: 1.5,
+  },
+  form: {
+    width: '100%',
+    maxWidth: '500px',
+    margin: '0 auto',
+  },
+  title: {
+    fontSize: '28px',
+    textAlign: 'center',
+    marginBottom: '24px',
+    color: '#262626',
+  },
+  highlight: {
+    color: '#ffc107',
+    fontWeight: 'bold',
+  },
+  inputGroup: {
+    marginBottom: '20px',
+  },
+  input: {
+    height: '40px',
+  },
+  select: {
+    width: '100%',
+    height: '45px',
+  },
+  registerButton: {
+    width: '100%',
+    height: '45px',
+    fontSize: '16px',
+    background: '#ffc107',
+    borderColor: '#ffc107',
+    marginTop: '24px',
+    '&:hover': {
+      background: '#ffb300',
+      borderColor: '#ffb300',
+    },
+  },
+  footer: {
+    textAlign: 'center',
+    marginTop: '24px',
+  },
+  link: {
+    color: '#1890ff',
+    cursor: 'pointer',
+    marginLeft: '8px',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  },
+};
 
 const RegisterPage = () => {
   const [firstName, setFirstName] = useState('');
@@ -11,192 +118,171 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
-  const [major, setMajor] = useState(''); // State for major selection
-  const [role, setRole] = useState(''); // State for role selection
-  const [majors, setMajors] = useState([]); // State to store the list of majors
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [major, setMajor] = useState('');
+  const [role, setRole] = useState('');
+  const [majors, setMajors] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch majors when the component mounts
   useEffect(() => {
     const fetchMajors = async () => {
       try {
         const response = await MajorCodeService.getAllMajorCodes();
-        setMajors(response.items); // Assuming response is an array of major objects
+        setMajors(response.items);
       } catch (err) {
-        console.error('Error fetching majors:', err);
-        setError('Failed to load majors.');
+        message.error('Không thể tải danh sách ngành học');
       }
     };
     fetchMajors();
   }, []);
 
-  // Handle form submission for registration
-  const handleRegisterSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!firstName || !lastName || !email || !password || !major || !role) {
-      setError('Please fill in all required fields.');
+      message.error('Vui lòng điền đầy đủ thông tin bắt buộc!');
       return;
     }
 
     try {
       const response = await handleUserRegistration(firstName, lastName, email, password, code);
       if (response?.message) {
-        setSuccess('Registration successful! Redirecting to login...');
-        setTimeout(() => navigate('/login'), 2000); // Redirect to login page after successful registration
+        message.success('Đăng ký thành công! Đang chuyển hướng...');
+        setTimeout(() => navigate('/login'), 2000);
       }
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      message.error('Đăng ký thất bại. Vui lòng thử lại!');
     }
   };
 
   return (
-    <Box className="register-page" sx={{ display: 'flex', height: '100vh' }}>
-      {/* Left Section */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, #1E90FF, #00BFFF)',
-          color: '#ffffff',
-        }}
-      >
-        <img
-          src="/assets/images/login-thumb.png"
-          alt="Register Illustration"
-          className="register-image"
-          style={{ width: '80%', maxWidth: '400px' }}
-        />
-      </Box>
+    <Layout style={styles.container}>
+      <Layout.Content style={styles.content}>
+        <div style={styles.card}>
+          <div style={styles.leftSection}>
+            <img
+              src="/assets/images/login-thumb.png"
+              alt="Register"
+              style={styles.registerImage}
+            />
+            <Text style={styles.welcomeText}>
+              Tham gia cộng đồng cựu sinh viên FPT để mở rộng mạng lưới và cơ hội nghề nghiệp
+            </Text>
+          </div>
 
-      {/* Right Section */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          px: 3,
-          bgcolor: '#ffffff',
-          boxShadow: 3,
-        }}
-      >
-        <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
-          Create a new account
-        </Typography>
-        {/* Display Success or Error Message */}
-        {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
-        {success && <Typography color="success" sx={{ mt: 2 }}>{success}</Typography>}
+          <div style={styles.rightSection}>
+            <div style={styles.form}>
+              <Title level={2} style={styles.title}>
+                Đăng ký tài khoản <span style={styles.highlight}>Alumni Connect</span>
+              </Title>
 
-        {/* Registration Form */}
-        <form onSubmit={handleRegisterSubmit} style={{ width: '100%' }}>
-          <TextField
-            fullWidth
-            label="First Name"
-            variant="outlined"
-            margin="normal"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Last Name"
-            variant="outlined"
-            margin="normal"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Email"
-            variant="outlined"
-            margin="normal"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Password"
-            variant="outlined"
-            margin="normal"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Referral Code (Optional)"
-            variant="outlined"
-            margin="normal"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
+              <div style={styles.inputGroup}>
+                <Input
+                  size="large"
+                  placeholder="Họ"
+                  prefix={<UserOutlined />}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
 
-          {/* Major Selection */}
-          <FormControl fullWidth variant="outlined">
-            <InputLabel>Major</InputLabel>
-            <Select
-              label="Major"
-              value={major}
-              onChange={(e) => setMajor(e.target.value)}
-              required
-            >
-              {majors.map((major) => (
-                <MenuItem key={major.majorId} value={major.majorId}>
-                  {major.majorName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <div style={styles.inputGroup}>
+                <Input
+                  size="large"
+                  placeholder="Tên"
+                  prefix={<UserOutlined />}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
 
-          {/* Role Selection */}
-          <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-            <InputLabel>Role</InputLabel>
-            <Select
-              label="Role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-            >
-              <MenuItem value={1}>Alumni</MenuItem>
-              <MenuItem value={2}>Student</MenuItem>
-              <MenuItem value={3}>Recruiter</MenuItem>
-            </Select>
-          </FormControl>
+              <div style={styles.inputGroup}>
+                <Input
+                  size="large"
+                  placeholder="Email"
+                  prefix={<MailOutlined />}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
 
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            sx={{
-              mt: 2,
-              bgcolor: '#FFC107',
-              ':hover': { bgcolor: '#FFA000' },
-              textTransform: 'none',
-            }}
-          >
-            Register
-          </Button>
-          <Typography sx={{ mt: 1 }}>
-          Already have an account?{' '}
-          <span
-            style={{ color: '#1976d2', cursor: 'pointer' }}
-            onClick={() => navigate('/login')}
-          >
-            Login
-          </span>
-        </Typography>
-        </form>
+              <div style={styles.inputGroup}>
+                <Input.Password
+                  size="large"
+                  placeholder="Mật khẩu"
+                  prefix={<LockOutlined />}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
 
+              <div style={styles.inputGroup}>
+                <Input
+                  size="large"
+                  placeholder="Mã giới thiệu (không bắt buộc)"
+                  prefix={<IdcardOutlined />}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
 
-        
-      </Box>
-    </Box>
+              <div style={styles.inputGroup}>
+                <Select
+                  size="large"
+                  placeholder="Chọn ngành học"
+                  value={major}
+                  onChange={setMajor}
+                  style={styles.select}
+                >
+                  {majors.map((major) => (
+                    <Option key={major.majorId} value={major.majorId}>
+                      {major.majorName}
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div style={styles.inputGroup}>
+                <Select
+                  size="large"
+                  placeholder="Chọn vai trò"
+                  value={role}
+                  onChange={setRole}
+                  style={styles.select}
+                >
+                  <Option value={1}>Cựu sinh viên</Option>
+                  <Option value={2}>Sinh viên</Option>
+                  <Option value={3}>Nhà tuyển dụng</Option>
+                </Select>
+              </div>
+
+              <Button
+                type="primary"
+                size="large"
+                onClick={handleSubmit}
+                style={styles.registerButton}
+              >
+                Đăng ký
+              </Button>
+
+              <div style={styles.footer}>
+                <Text>Đã có tài khoản?</Text>
+                <Text
+                  style={styles.link}
+                  onClick={() => navigate('/login')}
+                >
+                  Đăng nhập
+                </Text>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout.Content>
+    </Layout>
   );
 };
 

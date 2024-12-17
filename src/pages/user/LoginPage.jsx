@@ -1,210 +1,259 @@
-import React, { useState } from "react";
-import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
-import { useNavigate } from "react-router-dom";
-import {
-  TextField,
-  Checkbox,
-  Button,
-  Typography,
-  Box,
-  InputAdornment,
-  IconButton,
-} from "@mui/material";
-import { Google, Visibility, VisibilityOff } from "@mui/icons-material";
-import "./LoginPage.css";
-import { handleGoogleLogin, handleEmailPasswordLogin } from "../../services/AuthService";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Layout, Typography, Input, Checkbox, Button, message } from 'antd';
+import { UserOutlined, LockOutlined, GoogleOutlined } from '@ant-design/icons';
+import { handleGoogleLogin, handleEmailPasswordLogin } from '../../services/AuthService';
+
+const { Title, Text } = Typography;
+
+const styles = {
+  container: {
+    minHeight: '100vh',
+    background: '#f0f2f5',
+    display: 'flex',
+    alignItems: 'stretch',
+  },
+  content: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    display: 'flex',
+    width: '100%',
+    minHeight: '100vh', // Account for padding
+    background: '#fff',
+    borderRadius: '8px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    overflow: 'hidden',
+  },
+  leftSection: {
+    flex: '1 1 50%',
+    background: 'linear-gradient(135deg, #1890ff, #096dd9)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '48px',
+    position: 'relative',
+  },
+  rightSection: {
+    flex: '1 1 50%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    padding: '48px',
+    background: '#fff',
+  },
+  loginImage: {
+    width: '100%',
+    maxWidth: '440px',
+    height: 'auto',
+    objectFit: 'contain',
+  },
+  form: {
+    width: '100%',
+    maxWidth: '500px',
+    margin: '0 auto',
+  },
+  title: {
+    fontSize: '28px',
+    textAlign: 'center',
+    marginBottom: '32px',
+    color: '#262626',
+  },
+  highlight: {
+    color: '#ffc107',
+    fontWeight: 'bold',
+  },
+  input: {
+    height: '45px',
+    marginBottom: '16px',
+  },
+  googleButton: {
+    width: '100%',
+    height: '45px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    marginBottom: '24px',
+    border: '1px solid #d9d9d9',
+  },
+  divider: {
+    display: 'flex',
+    alignItems: 'center',
+    margin: '24px 0',
+  },
+  dividerLine: {
+    flex: 1,
+    height: '1px',
+    background: '#e8e8e8',
+  },
+  dividerText: {
+    padding: '0 16px',
+    color: '#8c8c8c',
+    fontWeight: 500,
+  },
+  rememberForgot: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+  },
+  loginButton: {
+    width: '100%',
+    height: '45px',
+    fontSize: '16px',
+    background: '#ffc107',
+    borderColor: '#ffc107',
+    fontWeight: 500,
+    '&:hover': {
+      background: '#ffb300',
+      borderColor: '#ffb300',
+    },
+  },
+  footer: {
+    textAlign: 'center',
+    marginTop: '32px',
+  },
+  link: {
+    color: '#1890ff',
+    cursor: 'pointer',
+    marginLeft: '8px',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: '20px',
+    textAlign: 'center',
+    marginTop: '24px',
+    maxWidth: '80%',
+  },
+};
 
 const LoginPage = () => {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  // Handle Google login success
   const handleGoogleSuccess = async (credentialResponse) => {
-    const { credential } = credentialResponse;
     try {
-      const response = await handleGoogleLogin(credential);
+      const response = await handleGoogleLogin(credentialResponse.credential);
       if (response.accessToken) {
-        setSuccess("Google login successful! Redirecting...");
-        setTimeout(() => navigate("/"), 2000);
-      } else {
-        setError("Google login failed. Please try again.");
+        sessionStorage.setItem('accessToken', response.accessToken);
+        sessionStorage.setItem('userInfo', JSON.stringify(response.userInfo));
+        message.success('Đăng nhập thành công!');
+        navigate('/');
       }
     } catch (err) {
-      setError(err.message || "Google login failed. Please try again.");
+      message.error('Đăng nhập bằng Google thất bại');
     }
   };
 
-  const handleGoogleFailure = () => {
-    setError("Google login failed. Please try again.");
-  };
-
-  // Handle password visibility toggle
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
-  };
-
-  // Handle form submission for email/password login
-  const handleLoginSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      setError("Please fill in all fields.");
+      message.error('Vui lòng điền đầy đủ thông tin!');
       return;
     }
+
     try {
       const response = await handleEmailPasswordLogin(email, password);
       if (response.userInfo.email) {
-        // Save login info to sessionStorage
-        sessionStorage.setItem("accessToken", response.accessToken);
-        sessionStorage.setItem("userInfo", JSON.stringify(response.userInfo));
-  
-        setSuccess("Login successful! Redirecting...");
-        setTimeout(() => navigate("/"), 2000);
-      } else {
-        setError("Invalid email or password. Please try again.");
+        sessionStorage.setItem('accessToken', response.accessToken);
+        sessionStorage.setItem('userInfo', JSON.stringify(response.userInfo));
+        message.success('Đăng nhập thành công!');
+        navigate('/');
       }
     } catch (err) {
-      setError(err.message || "Login failed. Please try again.");
+      message.error('Email hoặc mật khẩu không chính xác!');
     }
   };
 
   return (
-    <GoogleOAuthProvider clientId="">
-      <Box className="login-page" sx={{ display: "flex", height: "100vh" }}>
-        {/* Left Section */}
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            background: "linear-gradient(135deg, #1E90FF, #00BFFF)",
-            color: "#ffffff",
-          }}
-        >
-          <img
-            src="/assets/images/login-thumb.png"
-            alt="Login Illustration"
-            className="login-image"
-            style={{ width: "80%", maxWidth: "400px" }}
-          />
-        </Box>
+    <Layout style={styles.container}>
+      <Layout.Content style={styles.content}>
+        <div style={styles.card}>
+          <div style={styles.leftSection}>
+            <img
+              src="/assets/images/login-thumb.png"
+              alt="Login"
+              style={styles.loginImage}
+            />
+            <Text style={styles.welcomeText}>
+              Kết nối với hơn 50,000 cựu sinh viên FPT trên toàn cầu
+            </Text>
+          </div>
+          
+          <div style={styles.rightSection}>
+            <div style={styles.form}>
+              <Title level={2} style={styles.title}>
+                Chào mừng đến với <span style={styles.highlight}>Alumni Connect</span>
+              </Title>
 
-        {/* Right Section */}
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            px: 3,
-            bgcolor: "#ffffff",
-            boxShadow: 3,
-          }}
-        >
-          <Typography variant="h4" sx={{ mb: 3, fontWeight: "bold" }}>
-            Welcome to <span style={{ color: "#FFC107" }}>Alumni Connect</span>
-          </Typography>
-
-          {/* Google Login */}
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleFailure}
-            render={(renderProps) => (
-              <Button
-                variant="outlined"
-                startIcon={<Google />}
-                onClick={renderProps.onClick}
-                disabled={renderProps.disabled}
-                sx={{
-                  width: "100%",
-                  mb: 2,
-                  textTransform: "none",
-                  color: "#757575",
-                  borderColor: "#757575",
-                  ":hover": { borderColor: "#424242", color: "#424242" },
-                }}
+              <Button 
+                icon={<GoogleOutlined />}
+                style={styles.googleButton}
+                onClick={() => handleGoogleSuccess({ credential: 'dummy' })}
               >
-                Login with Google
+                Đăng nhập bằng Google
               </Button>
-            )}
-          />
 
-          <Box sx={{ display: "flex", alignItems: "center", width: "100%", my: 2 }}>
-            <Box sx={{ flex: 1, height: "1px", bgcolor: "#ccc" }} />
-            <Typography sx={{ mx: 2, fontWeight: "bold", color: "#757575" }}>OR</Typography>
-            <Box sx={{ flex: 1, height: "1px", bgcolor: "#ccc" }} />
-          </Box>
+              <div style={styles.divider}>
+                <div style={styles.dividerLine} />
+                <Text style={styles.dividerText}>HOẶC</Text>
+                <div style={styles.dividerLine} />
+              </div>
 
-          {/* Email and Password Login */}
-          <form onSubmit={handleLoginSubmit} style={{ width: "100%" }}>
-            <TextField
-              fullWidth
-              label="Email"
-              variant="outlined"
-              margin="normal"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              type={showPassword ? "text" : "password"}
-              label="Password"
-              variant="outlined"
-              margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 1 }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={togglePasswordVisibility} edge="end">
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", mb: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Checkbox />
-                <Typography>Remember me</Typography>
-              </Box>
-              <Typography sx={{ color: "#1976d2", cursor: "pointer" }}>Forgot Password?</Typography>
-            </Box>
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              sx={{
-                mb: 2,
-                bgcolor: "#FFC107",
-                ":hover": { bgcolor: "#FFA000" },
-                textTransform: "none",
-              }}
-            >
-              Login
-            </Button>
-          </form>
+              <Input
+                size="large"
+                placeholder="Email"
+                prefix={<UserOutlined />}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={styles.input}
+              />
 
-          {/* Display Success or Error Message */}
-          {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
-          {success && <Typography color="success" sx={{ mt: 2 }}>{success}</Typography>}
+              <Input.Password
+                size="large"
+                placeholder="Mật khẩu"
+                prefix={<LockOutlined />}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={styles.input}
+              />
 
-          <Typography sx={{ mt: 10 }}>
-            Don't have an account?{" "}
-            <span style={{ color: "#1976d2", cursor: "pointer" }}
-                onClick={() => navigate('/register')}>Register</span>
-          </Typography>
-        </Box>
-      </Box>
-    </GoogleOAuthProvider>
+              <div style={styles.rememberForgot}>
+                <Checkbox>Ghi nhớ đăng nhập</Checkbox>
+                <Text style={styles.link}>Quên mật khẩu?</Text>
+              </div>
+
+              <Button 
+                type="primary"
+                style={styles.loginButton}
+                onClick={handleSubmit}
+              >
+                Đăng nhập
+              </Button>
+
+              <div style={styles.footer}>
+                <Text>Chưa có tài khoản?</Text>
+                <Text 
+                  style={styles.link}
+                  onClick={() => navigate('/register')}
+                >
+                  Đăng ký ngay
+                </Text>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout.Content>
+    </Layout>
   );
 };
 
