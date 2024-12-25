@@ -1,89 +1,156 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Form, Input, Button, Select, message, Table, Modal } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import AdminLayout from '../../layouts/AdminLayout';
+import MentorshipService from '../../services/MentorshipService';
 
 const { TextArea } = Input;
 const { Option } = Select;
 
 const MentorshipRequestPage = () => {
   const [loading, setLoading] = useState(false);
-  const [requests, setRequests] = useState([
-    { id: 1, requestMessage: 'Cần hỗ trợ hướng nghiệp', type: 'Hướng nghiệp', status: 'Đang chờ' },
-    { id: 2, requestMessage: 'Giúp đỡ về môn học', type: 'Giúp đỡ học thuật', status: 'Đã phê duyệt' },
-  ]);
+  const [requests, setRequests] = useState([]);
   const [editingRequest, setEditingRequest] = useState(null);
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    total: 0
+  });
 
-  const onFinish = async (values) => {
-    setLoading(true);
+  const fetchMentorships = async () => {
     try {
-      if (editingRequest) {
-        // Update existing request
-        setRequests((prevRequests) =>
-          prevRequests.map((request) =>
-            request.id === editingRequest.id ? { ...request, ...values } : request
-          )
-        );
-        message.success("Cập nhật yêu cầu hướng dẫn thành công!");
-      } else {
-        // Add new request
-        const newRequest = {
-          ...values,
-          id: requests.length + 1, // This can be replaced with a more robust ID generation method
-        };
-        setRequests((prevRequests) => [...prevRequests, newRequest]);
-        message.success("Yêu cầu hướng dẫn đã được gửi thành công!");
-      }
+      setLoading(true);
+      const response = await MentorshipService.getAllMentorships({}, pagination);
+      setRequests(response.items || []);
+      setPagination(prev => ({ ...prev, total: response.total }));
     } catch (error) {
-      message.error("Gửi yêu cầu hướng dẫn thất bại.");
+      message.error('Không thể tải danh sách yêu cầu hướng dẫn');
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMentorships();
+  }, [pagination.page, pagination.pageSize]);
+
+  const handleSubmit = async (values) => {
+    try {
+      setLoading(true);
+      const mentorshipData = {
+        ...values,
+        alumniId: 1, // Replace with actual logged-in alumni ID
+        status: editingRequest ? values.status : 'PENDING'
+      };
+
+      if (editingRequest) {
+        await MentorshipService.updateMentorship(editingRequest.id, mentorshipData);
+        message.success('Cập nhật yêu cầu hướng dẫn thành công');
+      } else {
+        await MentorshipService.createMentorship(mentorshipData);
+        message.success('Tạo yêu cầu hướng dẫn thành công');
+      }
+
+      setIsModalVisible(false);
       form.resetFields();
       setEditingRequest(null);
-      setIsModalVisible(false); // Close modal after submit
+      fetchMentorships();
+    } catch (error) {
+      message.error('Có lỗi xảy ra. Vui lòng thử lại');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = (request) => {
     setEditingRequest(request);
-    form.setFieldsValue(request);
-    setIsModalVisible(true); // Show modal for editing
+    form.setFieldsValue({
+      requestMessage: request.requestMessage,
+      type: request.type,
+      status: request.status
+    });
+    setIsModalVisible(true);
   };
 
   const handleDelete = (id) => {
     Modal.confirm({
       title: 'Bạn có chắc chắn muốn xóa yêu cầu này?',
-      onOk: () => {
-        setRequests(requests.filter((request) => request.id !== id));
-        message.success('Yêu cầu đã được xóa thành công!');
-      },
+      onOk: async () => {
+        try {
+          await MentorshipService.deleteMentorship(id);
+          message.success('Xóa yêu cầu thành công');
+          fetchMentorships();
+        } catch (error) {
+          message.error('Không thể xóa yêu cầu');
+        }
+      }
+    });
+  };
+
+  const handleTableChange = (pagination) => {
+    setPagination({
+      page: pagination.current,
+      pageSize: pagination.pageSize,
+      total: pagination.total
     });
   };
 
   const columns = [
-    { title: 'Tin nhắn yêu cầu', dataIndex: 'requestMessage', key: 'requestMessage' },
-    { title: 'Loại', dataIndex: 'type', key: 'type' },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+    { 
+      title: 'Tin nhắn yêu cầu', 
+      dataIndex: 'requestMessage', 
+      key: 'requestMessage',
+      ellipsis: true 
+    },
+    { 
+      title: 'Loại', 
+      dataIndex: 'type', 
+      key: 'type',
+      width: 150,
+      render: (type) => {
+        const typeMap = {
+          'CAREER': 'Hướng nghiệp',
+          'ACADEMIC': 'Học thuật',
+          'NETWORKING': 'Kết nối'
+        };
+        return typeMap[type] || type;
+      }
+    },
+    { 
+      title: 'Trạng thái', 
+      dataIndex: 'status', 
+      key: 'status',
+      width: 150,
+      render: (status) => {
+        const statusMap = {
+          'PENDING': 'Đang chờ',
+          'APPROVED': 'Đã phê duyệt',
+          'REJECTED': 'Đã từ chối'
+        };
+        return statusMap[status] || status;
+      }
+    },
     {
       title: 'Hành động',
       key: 'action',
-      render: (_, request) => (
+      width: 120,
+      render: (_, record) => (
         <>
           <Button
             icon={<EditOutlined />}
-            onClick={() => handleEdit(request)}
+            onClick={() => handleEdit(record)}
             style={{ marginRight: 8 }}
             type="default"
             shape="circle"
           />
           <Button
             icon={<DeleteOutlined />}
-            danger
-            onClick={() => handleDelete(request.id)}
+            onClick={() => handleDelete(record.id)}
             type="default"
             shape="circle"
+            danger
           />
         </>
       ),
@@ -93,58 +160,81 @@ const MentorshipRequestPage = () => {
   return (
     <AdminLayout headerName="Yêu cầu hướng dẫn">
       <Layout.Content style={{ padding: '24px' }}>
-        <Button type="primary" onClick={() => setIsModalVisible(true)}>
-          Gửi Yêu cầu
+        <Button 
+          type="primary" 
+          icon={<PlusOutlined />}
+          onClick={() => setIsModalVisible(true)}
+          style={{ marginBottom: 16 }}
+        >
+          Tạo yêu cầu
         </Button>
 
-        <Table columns={columns} dataSource={requests} rowKey="id" style={{ marginTop: 24 }} />
+        <Table 
+          columns={columns} 
+          dataSource={requests} 
+          rowKey="id" 
+          loading={loading}
+          onChange={handleTableChange}
+          pagination={{
+            current: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total
+          }}
+        />
 
         <Modal
-          title={editingRequest ? "Chỉnh sửa Yêu cầu" : "Tạo Yêu cầu"}
-          visible={isModalVisible}
+          title={editingRequest ? "Chỉnh sửa yêu cầu" : "Tạo yêu cầu mới"}
+          open={isModalVisible}
           onCancel={() => {
             setIsModalVisible(false);
             form.resetFields();
             setEditingRequest(null);
           }}
           footer={null}
+          destroyOnClose
         >
-          <Form form={form} layout="vertical" onFinish={onFinish}>
+          <Form 
+            form={form} 
+            layout="vertical" 
+            onFinish={handleSubmit}
+          >
             <Form.Item
-              label="Tin nhắn yêu cầu"
               name="requestMessage"
+              label="Tin nhắn yêu cầu"
               rules={[{ required: true, message: 'Vui lòng nhập tin nhắn yêu cầu' }]}
             >
-              <TextArea rows={4} placeholder="Mô tả yêu cầu hướng dẫn của bạn ở đây..." />
+              <TextArea rows={4} />
             </Form.Item>
 
             <Form.Item
-              label="Loại"
               name="type"
+              label="Loại"
               rules={[{ required: true, message: 'Vui lòng chọn loại hướng dẫn' }]}
             >
-              <Select placeholder="Chọn loại hướng dẫn">
-                <Option value="Hướng nghiệp">Hướng nghiệp</Option>
-                <Option value="Giúp đỡ học thuật">Giúp đỡ học thuật</Option>
-                <Option value="Kết nối">Kết nối</Option>
+              <Select>
+                <Option value="CAREER">Hướng nghiệp</Option>
+                <Option value="ACADEMIC">Học thuật</Option>
+                <Option value="NETWORKING">Kết nối</Option>
               </Select>
             </Form.Item>
 
-            <Form.Item
-              label="Trạng thái"
-              name="status"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-            >
-              <Select placeholder="Chọn trạng thái yêu cầu">
-                <Option value="Đang chờ">Đang chờ</Option>
-                <Option value="Đã phê duyệt">Đã phê duyệt</Option>
-                <Option value="Đã từ chối">Đã từ chối</Option>
-              </Select>
-            </Form.Item>
+            {editingRequest && (
+              <Form.Item
+                name="status"
+                label="Trạng thái"
+                rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+              >
+                <Select>
+                  <Option value="PENDING">Đang chờ</Option>
+                  <Option value="APPROVED">Đã phê duyệt</Option>
+                  <Option value="REJECTED">Đã từ chối</Option>
+                </Select>
+              </Form.Item>
+            )}
 
             <Form.Item>
               <Button type="primary" htmlType="submit" loading={loading}>
-                {editingRequest ? 'Cập nhật Yêu cầu' : 'Gửi Yêu cầu'}
+                {editingRequest ? 'Cập nhật' : 'Tạo mới'}
               </Button>
             </Form.Item>
           </Form>

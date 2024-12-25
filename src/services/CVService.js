@@ -27,7 +27,7 @@ const CVService = {
    * @returns {Promise} - Axios response promise
    */
   getCVByUserId: (userId) => {
-    return ApiService.get(`/cv-user/${userId}`);
+    return ApiService.get(`/cvs/user/${userId}`);
   },
 
   /**

@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Typography, Spin, notification, Space, Tag, Descriptions, Form, Input, Button } from 'antd';
+import { Typography, Spin, notification, Space, Tag, Descriptions, Form, Input, Button, Card } from 'antd';
 import { 
   EnvironmentOutlined, 
   ClockCircleOutlined, 
   MailOutlined,
   DollarOutlined,
   UserOutlined,
-  TagOutlined
+  TagOutlined,
+  FileOutlined
 } from '@ant-design/icons';
 import UserLayout from '../../layouts/UserLayout/UserLayout';
 import JobPostService from '../../services/JobPostService';
-
+import CVSelectionModal from '../../components/UserJobPostDetails/CVSelectionModal';
+import JobApplicationService from '../../services/JobApplicationService';
 const { Title, Text, Paragraph } = Typography;
 
 const styles = {
@@ -64,7 +66,9 @@ const UserJobPostDetailsPage = () => {
   const [jobPost, setJobPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [selectedCV, setSelectedCV] = useState(null);
+  const [showCVModal, setShowCVModal] = useState(false);
+  const [form] = Form.useForm();
   useEffect(() => {
     const fetchJobPost = async () => {
       try {
@@ -85,13 +89,37 @@ const UserJobPostDetailsPage = () => {
     fetchJobPost();
   }, [id]);
 
+
+  const handleCVSelect = (cv) => {
+    setSelectedCV(cv);
+    setShowCVModal(false);
+  };
+
   const handleApply = async (values) => {
+    if (!selectedCV) {
+      notification.error({
+        message: 'Chưa chọn CV',
+        description: 'Vui lòng chọn CV trước khi ứng tuyển.',
+      });
+      return;
+    }
+
     try {
-      await JobPostService.applyToJobPost(id, values);
+      await JobApplicationService.createNewJobApplication({
+        jobPostId: parseInt(id),
+        cvId: selectedCV.id,
+        letterCover: values.coverLetter,
+        status: 'PENDING',
+        type: 'FULL_TIME'
+      });
+
       notification.success({
         message: 'Ứng tuyển thành công',
         description: 'Đơn ứng tuyển của bạn đã được gửi thành công!',
       });
+      
+      form.resetFields();
+      setSelectedCV(null);
     } catch (error) {
       notification.error({
         message: 'Lỗi ứng tuyển',
@@ -99,7 +127,6 @@ const UserJobPostDetailsPage = () => {
       });
     }
   };
-
   if (loading) {
     return (
       <UserLayout>
@@ -191,25 +218,59 @@ const UserJobPostDetailsPage = () => {
 
           {/* Application Form */}
           <Form
+            form={form}
             name="applyForm"
             layout="vertical"
             style={styles.applicationForm}
             onFinish={handleApply}
           >
-            <Form.Item
-              label="Thư xin việc"
-              name="coverLetter"
-              rules={[{ required: true, message: 'Vui lòng nhập thư xin việc của bạn!' }]}
-            >
-              <Input.TextArea 
-                rows={4} 
-                placeholder="Viết thư xin việc của bạn ở đây..." 
-              />
-            </Form.Item>
-            <Button type="primary" htmlType="submit">
-              Gửi đơn ứng tuyển
-            </Button>
+            <Card title="Thông tin ứng tuyển">
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {selectedCV ? (
+                  <Card size="small" style={{ marginBottom: 16 }}>
+                    <Space>
+                      <FileOutlined />
+                      <span>{selectedCV.fullName} - {selectedCV.jobLevel}</span>
+                      <Button size="small" onClick={() => setShowCVModal(true)}>
+                        Đổi CV khác
+                      </Button>
+                    </Space>
+                  </Card>
+                ) : (
+                  <Button 
+                    type="dashed" 
+                    onClick={() => setShowCVModal(true)}
+                    icon={<FileOutlined />}
+                    block
+                    style={{ marginBottom: 16 }}
+                  >
+                    Chọn CV của bạn
+                  </Button>
+                )}
+
+                <Form.Item
+                  label="Thư xin việc"
+                  name="coverLetter"
+                  rules={[{ required: true, message: 'Vui lòng nhập thư xin việc của bạn!' }]}
+                >
+                  <Input.TextArea 
+                    rows={4} 
+                    placeholder="Viết thư xin việc của bạn ở đây..." 
+                  />
+                </Form.Item>
+
+                <Button type="primary" htmlType="submit" block>
+                  Gửi đơn ứng tuyển
+                </Button>
+              </Space>
+            </Card>
           </Form>
+
+          <CVSelectionModal
+            visible={showCVModal}
+            onSelect={handleCVSelect}
+            onCancel={() => setShowCVModal(false)}
+          />
         </div>
       </div>
     </UserLayout>

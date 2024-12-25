@@ -33,6 +33,16 @@ const JobPostService = {
       throw error;
     }
   },
+  deleteJobPost: async (id) => {
+    try {
+      await ApiService.delete(`/jobposts/${id}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting job post:', error);
+      throw error;
+    }
+  },
+
 
   // Function to fetch all job posts with filtering and pagination
   getAllJobPosts: async (filter, pagingModel) => {

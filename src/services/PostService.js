@@ -60,7 +60,16 @@ const updatePost = async (postId, postData) => {
     throw error; // Propagate the error
   }
 };
-
+// Function to update a post by ID
+const deletePost = async (postId) => {
+  try {
+    await ApiService.delete(`${POSTS_ENDPOINT}/${postId}`);
+    return true;
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    throw error;
+  }
+};
 // Export the functions for use in other modules
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {

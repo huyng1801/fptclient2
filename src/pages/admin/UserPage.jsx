@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Layout,
   Form,
@@ -7,13 +7,11 @@ import {
   Table,
   Modal,
   Select,
-  DatePicker,
   Upload,
   message,
-  Checkbox,
+  Switch,
   Row,
-  Col,
-  Switch
+  Col
 } from 'antd';
 import {
   PlusOutlined,
@@ -22,103 +20,108 @@ import {
   UploadOutlined
 } from '@ant-design/icons';
 import AdminLayout from '../../layouts/AdminLayout';
-import moment from 'moment';
+import UserService from '../../services/UserService';
+import MajorCodeService from '../../services/MajorCodeService';
 
 const { Content } = Layout;
 const { Option } = Select;
 
 const UserPage = () => {
-  const [users, setUsers] = useState([
-    {
-      userId: 1,
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-      emailVerified: true,
-      roleId: 1,
-      majorId: 1,
-      googleId: '1234567890',
-      isMentor: false,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-02-01',
-      profilePicture: null,
-      createdBy: 'Admin',
-      updatedBy: 'Admin'
-    }
-  ]);
+  const [users, setUsers] = useState([]);
+  const [majors, setMajors] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 10 });
 
-  // Open modal for adding or editing a user
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await UserService.getAllUsers({}, pagination);
+      setUsers(response.items);
+    } catch (error) {
+      message.error('Không thể tải danh sách người dùng');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMajors = async () => {
+    try {
+      const response = await MajorCodeService.getAllMajorCodes();
+      setMajors(response.items);
+    } catch (error) {
+      message.error('Không thể tải danh sách ngành');
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+    fetchMajors();
+  }, [pagination]);
+
   const openModal = (user = null) => {
     setEditingUser(user);
     if (user) {
       form.setFieldsValue({
-        ...user,
-        createdAt: user.createdAt ? moment(user.createdAt) : null,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        roleId: user.roleId,
+        majorId: user.majorId,
+        isMentor: user.isMentor
       });
     } else {
       form.resetFields();
-      form.setFieldsValue({ createdAt: moment() });
     }
     setIsModalOpen(true);
   };
 
-  // Handle adding or updating user
-  const handleSaveUser = () => {
-    form
-      .validateFields()
-      .then((values) => {
-        // Handle file upload separately if needed
-        if (values.profilePicture && values.profilePicture.fileList.length > 0) {
-          values.profilePicture = values.profilePicture.fileList[0].originFileObj;
-        } else {
-          values.profilePicture = null;
-        }
-
-        if (editingUser) {
-          setUsers((prevUsers) =>
-            prevUsers.map((user) =>
-              user.userId === editingUser.userId ? { ...user, ...values, updatedAt: new Date().toISOString() } : user
-            )
-          );
-        } else {
-          setUsers((prevUsers) => [
-            ...prevUsers,
-            {
-              ...values,
-              userId: prevUsers.length + 1,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              profilePicture: null, // Handle as needed
-              createdBy: 'Admin', // Replace with actual user
-              updatedBy: 'Admin'  // Replace with actual user
-            }
-          ]);
-        }
-        setIsModalOpen(false);
-        setEditingUser(null);
-        form.resetFields();
-        message.success(`Người dùng đã được ${editingUser ? 'cập nhật' : 'thêm'} thành công`);
-      })
-      .catch((info) => {
-        console.log('Validate Failed:', info);
-      });
+  const handleSaveUser = async () => {
+    try {
+      const values = await form.validateFields();
+      
+      if (editingUser) {
+        await UserService.updateUserInfo(editingUser.userId, values);
+        message.success('Cập nhật người dùng thành công');
+      } else {
+        await UserService.createUser(values);
+        message.success('Thêm người dùng thành công');
+      }
+      
+      setIsModalOpen(false);
+      setEditingUser(null);
+      form.resetFields();
+      fetchUsers();
+    } catch (error) {
+      message.error('Có lỗi xảy ra. Vui lòng thử lại');
+    }
   };
 
-  // Confirm deletion of a user
   const handleDeleteUser = (userId) => {
     Modal.confirm({
       title: 'Bạn có chắc chắn muốn xóa người dùng này?',
-      onOk: () => {
-        setUsers(users.filter((user) => user.userId !== userId));
-        message.success('Xóa người dùng thành công');
+      onOk: async () => {
+        try {
+          await UserService.deleteUser(userId);
+          message.success('Xóa người dùng thành công');
+          fetchUsers();
+        } catch (error) {
+          message.error('Không thể xóa người dùng');
+        }
       }
     });
   };
 
-  // Table columns configuration
+  const handleTableChange = (pagination) => {
+    setPagination({
+      page: pagination.current,
+      pageSize: pagination.pageSize
+    });
+  };
+
   const columns = [
     { title: 'ID', dataIndex: 'userId', key: 'userId' },
     { title: 'Tên', dataIndex: 'firstName', key: 'firstName' },
@@ -129,6 +132,15 @@ const UserPage = () => {
       dataIndex: 'roleId',
       key: 'roleId',
       render: (roleId) => (roleId === 1 ? 'Quản trị' : 'Người dùng')
+    },
+    {
+      title: 'Ngành',
+      dataIndex: 'majorId',
+      key: 'majorId',
+      render: (majorId) => {
+        const major = majors.find(m => m.id === majorId);
+        return major ? major.name : 'N/A';
+      }
     },
     {
       title: 'Hành động',
@@ -160,26 +172,32 @@ const UserPage = () => {
         <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
           Thêm người dùng
         </Button>
+        
         <Table
           columns={columns}
           dataSource={users}
           rowKey="userId"
           style={{ marginTop: 16 }}
+          loading={loading}
+          onChange={handleTableChange}
+          pagination={{
+            current: pagination.page,
+            pageSize: pagination.pageSize,
+            total: users.length
+          }}
         />
 
-        {/* Add/Edit User Modal */}
         <Modal
           title={editingUser ? 'Chỉnh sửa người dùng' : 'Thêm người dùng'}
-          visible={isModalOpen}
+          open={isModalOpen}
           onCancel={() => setIsModalOpen(false)}
           onOk={handleSaveUser}
           okText={editingUser ? 'Cập nhật' : 'Thêm'}
-          width={800} // Increase modal size
+          width={800}
           destroyOnClose
         >
           <Form form={form} layout="vertical">
             <Row gutter={16}>
-              {/* Left Column */}
               <Col span={12}>
                 <Form.Item
                   name="firstName"
@@ -205,20 +223,10 @@ const UserPage = () => {
                 >
                   <Input type="email" />
                 </Form.Item>
-                <Form.Item
-                  name="emailVerified"
-                  label="Xác thực email"
-                  valuePropName="checked"
-                >
-                  <Switch checkedChildren="Đã xác thực" unCheckedChildren="Chưa xác thực" />
-                </Form.Item>
-
-
               </Col>
 
-              {/* Right Column */}
               <Col span={12}>
-              <Form.Item
+                <Form.Item
                   name="roleId"
                   label="Vai trò"
                   rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
@@ -228,16 +236,18 @@ const UserPage = () => {
                     <Option value={2}>Người dùng</Option>
                   </Select>
                 </Form.Item>
+                
                 <Form.Item
                   name="majorId"
                   label="Ngành"
-                  rules={[{ required: true, message: 'Vui lòng chọn mã ngành' }]}
+                  rules={[{ required: true, message: 'Vui lòng chọn ngành' }]}
                 >
                   <Select placeholder="Chọn ngành">
-                    <Option value="1">Ngành 1</Option>
-                    <Option value="2">Ngành 2</Option>
-                    <Option value="3">Ngành 3</Option>
-                    {/* Add more options as needed */}
+                    {majors.map(major => (
+                      <Option key={major.majorId} value={major.majorId}>
+                        {major.majorName}
+                      </Option>
+                    ))}
                   </Select>
                 </Form.Item>
 
@@ -261,7 +271,6 @@ const UserPage = () => {
                     <Button icon={<UploadOutlined />}>Tải lên</Button>
                   </Upload>
                 </Form.Item>
-            
               </Col>
             </Row>
           </Form>

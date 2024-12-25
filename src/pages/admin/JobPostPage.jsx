@@ -1,52 +1,48 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Table, Button, Modal, Form, Input, DatePicker, message } from 'antd';
-import { EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Layout, Button, Modal, Form, Input, DatePicker, message, Table } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 import AdminLayout from '../../layouts/AdminLayout';
-const { Header, Content, Sider } = Layout;
+import JobPostService from '../../services/JobPostService';
+
+const { Content } = Layout;
 
 const JobPostPage = () => {
-  // Dữ liệu bài đăng công việc ví dụ
-  const initialJobPosts = [
-    {
-      JobPostId: 1,
-      JobTitle: 'Kỹ Sư Phần Mềm',
-      Location: 'Hà Nội, Việt Nam',
-      MinSalary: 5000,
-      MaxSalary: 7000,
-      Time: '2024-11-01T10:00:00Z',
-    },
-    {
-      JobPostId: 2,
-      JobTitle: 'Quản Lý Dự Án',
-      Location: 'Thành phố Hồ Chí Minh, Việt Nam',
-      MinSalary: 7000,
-      MaxSalary: 10000,
-      Time: '2024-11-05T14:30:00Z',
-    },
-    {
-      JobPostId: 3,
-      JobTitle: 'Nhà Thiết Kế UI/UX',
-      Location: 'Đà Nẵng, Việt Nam',
-      MinSalary: 4000,
-      MaxSalary: 6000,
-      Time: '2024-10-30T09:00:00Z',
-    },
-  ];
-
-  const [jobPosts, setJobPosts] = useState(initialJobPosts);
+  const [jobPosts, setJobPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJobPost, setEditingJobPost] = useState(null);
   const [form] = Form.useForm();
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    total: 0
+  });
 
-  // Mở modal để thêm hoặc chỉnh sửa
+  const fetchJobPosts = async () => {
+    try {
+      setLoading(true);
+      const response = await JobPostService.getAllJobPosts({}, pagination);
+      setJobPosts(response.items || []);
+      setPagination(prev => ({ ...prev, total: response.total }));
+    } catch (error) {
+      message.error('Không thể tải danh sách bài đăng');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobPosts();
+  }, [pagination.page, pagination.pageSize]);
+
   const openModal = (jobPost = null) => {
     setEditingJobPost(jobPost);
     if (jobPost) {
       form.setFieldsValue({
         ...jobPost,
-        Time: jobPost.Time ? moment(jobPost.Time) : null,
+        time: moment(jobPost.time)
       });
     } else {
       form.resetFields();
@@ -54,119 +50,182 @@ const JobPostPage = () => {
     setIsModalOpen(true);
   };
 
-  // Xử lý lưu (thêm hoặc chỉnh sửa)
   const handleSaveJobPost = async () => {
     try {
       const values = await form.validateFields();
-      const jobPostData = { ...values, Time: values.Time ? values.Time.toISOString() : null };
+      const jobPostData = {
+        ...values,
+        time: values.time.toISOString(),
+        status: 'ACTIVE',
+        email: 'example@email.com', // Replace with actual user email
+        userId: 1 // Replace with actual user ID
+      };
 
       if (editingJobPost) {
-        // Cập nhật bài đăng công việc
-        setJobPosts(
-          jobPosts.map((post) =>
-            post.JobPostId === editingJobPost.JobPostId ? { ...post, ...jobPostData } : post
-          )
-        );
-        message.success('Cập nhật bài đăng công việc thành công');
+        await JobPostService.updateJobPost(editingJobPost.jobPostId, jobPostData);
+        message.success('Cập nhật bài đăng thành công');
       } else {
-        // Tạo bài đăng công việc mới
-        const newJobPost = { ...jobPostData, JobPostId: jobPosts.length + 1 }; // Tạo ID mới cho bài đăng
-        setJobPosts([...jobPosts, newJobPost]);
-        message.success('Thêm bài đăng công việc thành công');
+        await JobPostService.createJobPost(jobPostData);
+        message.success('Thêm bài đăng thành công');
       }
 
       setIsModalOpen(false);
       setEditingJobPost(null);
+      form.resetFields();
+      fetchJobPosts();
     } catch (error) {
-      message.error('Lưu bài đăng công việc thất bại');
+      message.error('Có lỗi xảy ra. Vui lòng thử lại');
     }
   };
 
-  // Xử lý xóa bài đăng công việc
-  const handleDeleteJobPost = (JobPostId) => {
-    Modal.confirm({
-      title: 'Bạn có chắc chắn muốn xóa bài đăng công việc này?',
-      onOk: () => {
-        setJobPosts(jobPosts.filter((post) => post.JobPostId !== JobPostId));
-        message.success('Bài đăng công việc đã bị xóa');
-      },
+  const handleTableChange = (pagination) => {
+    setPagination({
+      page: pagination.current,
+      pageSize: pagination.pageSize,
+      total: pagination.total
     });
   };
-
-  // Cột trong bảng bài đăng công việc
+  const handleDeleteJobPost = (jobPostId) => {
+    Modal.confirm({
+      title: 'Bạn có chắc chắn muốn xóa bài đăng này?',
+      content: 'Hành động này không thể hoàn tác',
+      onOk: async () => {
+        try {
+          await JobPostService.deleteJobPost(jobPostId);
+          message.success('Xóa bài đăng thành công');
+          fetchJobPosts();
+        } catch (error) {
+          message.error('Không thể xóa bài đăng');
+        }
+      }
+    });
+  };
   const columns = [
-    { title: 'Chức Danh Công Việc', dataIndex: 'JobTitle', key: 'JobTitle' },
-    { title: 'Địa Điểm', dataIndex: 'Location', key: 'Location' },
-    { title: 'Khoảng Lương', dataIndex: 'MinSalary', key: 'Salary', render: (minSalary, record) => `${minSalary} - ${record.MaxSalary}` },
-    { title: 'Thời Gian Đăng', dataIndex: 'Time', key: 'Time', render: (time) => moment(time).format('YYYY-MM-DD HH:mm') },
-    { title: 'Hành Động', key: 'actions', render: (_, record) => (
-      <>
-        <Button icon={<EditOutlined />} onClick={() => openModal(record)} style={{ marginRight: 8 }} />
-        <Button icon={<DeleteOutlined />} danger onClick={() => handleDeleteJobPost(record.JobPostId)} />
-        <Link to={`/admin/jobapplications/${record.JobPostId}`} style={{ marginLeft: 8 }}>
-          <Button icon={<SearchOutlined />} type="link">
-          </Button>
-        </Link>
-      </>
-    ) },
+    { title: 'Chức Danh', dataIndex: 'jobTitle', key: 'jobTitle' },
+    { title: 'Địa Điểm', dataIndex: 'location', key: 'location' },
+    { 
+      title: 'Khoảng Lương', 
+      key: 'salary',
+      render: (_, record) => `${record.minSalary || 0} - ${record.maxSalary || 0}`
+    },
+    { 
+      title: 'Thời Gian', 
+      dataIndex: 'time', 
+      key: 'time',
+      render: time => moment(time).format('DD/MM/YYYY HH:mm')
+    },
+    {
+      title: 'Hành Động',
+      key: 'actions',
+      render: (_, record) => (
+        <>
+          <Button
+            type="default"
+            shape="circle"
+            icon={<EditOutlined />}
+            onClick={() => openModal(record)}
+            style={{ marginRight: 8 }}
+          />
+          <Button
+            type="default"
+            shape="circle"
+            icon={<DeleteOutlined />}
+            danger
+            onClick={() => handleDeleteJobPost(record.jobPostId)}
+          />
+          <Link to={`/admin/jobapplications/${record.jobPostId}`}>
+            <Button type="link">Xem ứng viên</Button>
+          </Link>
+        </>
+      ),
+    },
   ];
 
   return (
-    <AdminLayout headerName="Sự Kiện">
-      <Layout.Content style={{ padding: '24px' }}>
-          <Button type="primary" onClick={() => openModal()} style={{ marginBottom: 16 }}>
-            Thêm Bài Đăng Công Việc
-          </Button>
+    <AdminLayout headerName="Bài đăng tuyển dụng">
+      <Content style={{ padding: '24px' }}>
+        <Button 
+          type="primary" 
+          icon={<PlusOutlined />} 
+          onClick={() => openModal()}
+          style={{ marginBottom: 16 }}
+        >
+          Thêm Bài Đăng
+        </Button>
 
-          <Table
-            columns={columns}
-            dataSource={jobPosts}
-            rowKey="JobPostId"
-            pagination={false}
-          />
+        <Table
+          columns={columns}
+          dataSource={jobPosts}
+          rowKey="jobPostId"
+          loading={loading}
+          onChange={handleTableChange}
+          pagination={{
+            current: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total
+          }}
+        />
 
-          {/* Modal để thêm/sửa bài đăng công việc */}
-          <Modal
-            title={editingJobPost ? 'Chỉnh Sửa Bài Đăng Công Việc' : 'Thêm Bài Đăng Công Việc'}
-            visible={isModalOpen}
-            onCancel={() => setIsModalOpen(false)}
-            onOk={handleSaveJobPost}
-            okText={editingJobPost ? 'Cập Nhật' : 'Thêm'}
-            destroyOnClose
-          >
-            <Form form={form} layout="vertical">
-              <Form.Item
-                name="JobTitle"
-                label="Chức Danh Công Việc"
-                rules={[{ required: true, message: 'Vui lòng nhập chức danh công việc' }]} >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                name="Location"
-                label="Địa Điểm"
-                rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]} >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                name="MinSalary"
-                label="Lương Tối Thiểu">
-                <Input type="number" />
-              </Form.Item>
-              <Form.Item
-                name="MaxSalary"
-                label="Lương Tối Đa">
-                <Input type="number" />
-              </Form.Item>
-              <Form.Item
-                name="Time"
-                label="Thời Gian Đăng"
-                rules={[{ required: true, message: 'Vui lòng chọn thời gian đăng' }]} >
-                <DatePicker showTime />
-              </Form.Item>
-            </Form>
-          </Modal>
-          </Layout.Content>
-          </AdminLayout>
+        <Modal
+          title={editingJobPost ? 'Chỉnh sửa Bài Đăng' : 'Thêm Bài Đăng'}
+          open={isModalOpen}
+          onCancel={() => setIsModalOpen(false)}
+          onOk={handleSaveJobPost}
+          okText={editingJobPost ? 'Cập nhật' : 'Thêm'}
+          width={800}
+          destroyOnClose
+        >
+          <Form form={form} layout="vertical">
+            <Form.Item
+              name="jobTitle"
+              label="Chức Danh"
+              rules={[{ required: true, message: 'Vui lòng nhập chức danh' }]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name="jobDescription"
+              label="Mô tả Công việc"
+              rules={[{ required: true, message: 'Vui lòng nhập mô tả công việc' }]}
+            >
+              <Input.TextArea rows={4} />
+            </Form.Item>
+            <Form.Item
+              name="location"
+              label="Địa Điểm"
+              rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item name="minSalary" label="Lương Tối Thiểu">
+              <Input type="number" />
+            </Form.Item>
+            <Form.Item name="maxSalary" label="Lương Tối Đa">
+              <Input type="number" />
+            </Form.Item>
+            <Form.Item
+              name="requirements"
+              label="Yêu Cầu"
+            >
+              <Input.TextArea rows={4} />
+            </Form.Item>
+            <Form.Item
+              name="benefits"
+              label="Quyền Lợi"
+            >
+              <Input.TextArea rows={4} />
+            </Form.Item>
+            <Form.Item
+              name="time"
+              label="Thời Gian Đăng"
+              rules={[{ required: true, message: 'Vui lòng chọn thời gian đăng' }]}
+            >
+              <DatePicker showTime style={{ width: '100%' }} />
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Content>
+    </AdminLayout>
   );
 };
 

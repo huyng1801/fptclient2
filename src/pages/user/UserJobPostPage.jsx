@@ -11,9 +11,7 @@ const { Title } = Typography;
 
 const styles = {
   container: {
-    maxWidth: '1200px',
     margin: '0 auto',
-    padding: '24px',
   },
   header: {
     display: 'flex',
