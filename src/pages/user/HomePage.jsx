@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Typography, Input, Card, Avatar, Tag, Button, Space } from 'antd';
 import { SearchOutlined, UserOutlined, CalendarOutlined, EnvironmentOutlined } from '@ant-design/icons';
-import UserLayout from '../../layouts/UserLayout/UserLayout';
+import UserLayout from '../../layouts/UserLayout';
 import PostService from '../../services/PostService';
 import EventService from '../../services/EventService';
 import JobPostService from '../../services/JobPostService';
@@ -82,11 +82,13 @@ const styles = {
 
 function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [posts, setPosts] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [jobs, setJobs] = useState([]);
+  const [originalPosts, setOriginalPosts] = useState([]);
+  const [originalEvents, setOriginalEvents] = useState([]);
+  const [originalJobs, setOriginalJobs] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,24 +96,53 @@ function HomePage() {
         const [postsData, eventsData, jobsData] = await Promise.all([
           PostService.getAllPosts(),
           EventService.getAllEvents(),
-          JobPostService.getAllJobPosts()
+          JobPostService.getAllJobPosts(),
         ]);
         const storedUserInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
         if (storedUserInfo.userId) {
           const userData = await UserService.getUser(storedUserInfo.userId);
           setUserInfo(userData);
-          // Update the stored user info with the latest data
           sessionStorage.setItem('userInfo', JSON.stringify(userData));
         }
-        setPosts(postsData.items);
-        setEvents(eventsData.items);
-        setJobs(jobsData.items);
+        setOriginalPosts(postsData.items);
+        setOriginalEvents(eventsData.items);
+        setOriginalJobs(jobsData.items);
+        setFilteredPosts(postsData.items);
+        setFilteredEvents(eventsData.items);
+        setFilteredJobs(jobsData.items);
       } catch (error) {
-        console.error('Lỗi khi lấy dữ liệu:', error);
+        console.error('Error fetching data:', error);
       }
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const lowerCaseQuery = searchQuery.toLowerCase();
+
+    setFilteredPosts(
+      originalPosts.filter((post) =>
+        post.title.toLowerCase().includes(lowerCaseQuery) ||
+        post.content.toLowerCase().includes(lowerCaseQuery)
+      )
+    );
+
+    setFilteredEvents(
+      originalEvents.filter((event) =>
+        event.eventName.toLowerCase().includes(lowerCaseQuery) ||
+        event.description.toLowerCase().includes(lowerCaseQuery) ||
+        event.location.toLowerCase().includes(lowerCaseQuery)
+      )
+    );
+
+    setFilteredJobs(
+      originalJobs.filter((job) =>
+        job.jobTitle.toLowerCase().includes(lowerCaseQuery) ||
+        job.location.toLowerCase().includes(lowerCaseQuery) ||
+        `${job.minSalary}-${job.maxSalary}`.includes(lowerCaseQuery)
+      )
+    );
+  }, [searchQuery, originalPosts, originalEvents, originalJobs]);
 
   return (
     <UserLayout>
@@ -131,7 +162,7 @@ function HomePage() {
       </div>
 
       <div style={styles.container}>
-        <div style={styles.searchSection}>
+      <div style={styles.searchSection}>
           <Title level={2}>Bạn đang tìm gì?</Title>
           <Input
             size="large"
@@ -164,7 +195,7 @@ function HomePage() {
           <Col span={16}>
             <div style={styles.section}>
               <Title level={3}>Sự kiện mới nhất</Title>
-              {events.slice(0, 3).map((event) => (
+              {filteredEvents.slice(0, 3).map((event) => (
                 <Card key={event.eventId} style={styles.eventCard}>
                   <Title level={4}>{event.title}</Title>
                   <Space>
@@ -179,7 +210,7 @@ function HomePage() {
 
             <div style={styles.section}>
               <Title level={3}>Cơ hội việc làm</Title>
-              {jobs.slice(0, 2).map((job) => (
+              {filteredJobs.slice(0, 2).map((job) => (
                 <Card key={job.jobPostId} style={styles.jobCard}>
                   <Title level={4}>{job.jobTitle}</Title>
                   <Tag color="blue">{job.location}</Tag>
@@ -194,7 +225,7 @@ function HomePage() {
           <Col span={8}>
             <div style={styles.section}>
               <Title level={3}>Bài viết mới nhất</Title>
-              {posts.slice(0, 5).map((post) => (
+              {filteredPosts.slice(0, 5).map((post) => (
                 <Card key={post.postId} style={{ marginBottom: '16px' }}>
                   <Title level={4}>{post.title}</Title>
                   <Paragraph ellipsis={{ rows: 2 }}>{post.content}</Paragraph>

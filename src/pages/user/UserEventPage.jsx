@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { List, Typography, Button, Modal, Card, Descriptions } from 'antd';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
-import UserLayout from '../../layouts/UserLayout/UserLayout'; // Adjust the import path as needed
+import UserLayout from '../../layouts/UserLayout'; // Adjust the import path as needed
 
 const { Title, Text } = Typography;
 

@@ -1,11 +1,18 @@
 import React from 'react';
-import { Card, Typography, Tag, Image, Button } from 'antd';
-import { ClockCircleOutlined, EnvironmentOutlined, UserOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Card, Typography, Tag, Image, Button, Space } from 'antd';
+import { 
+  ClockCircleOutlined, 
+  EnvironmentOutlined, 
+  UserOutlined, 
+  CalendarOutlined,
+  EditOutlined,
+  DeleteOutlined
+} from '@ant-design/icons';
 import { format } from 'date-fns';
 
 const { Text, Paragraph } = Typography;
 
-function EventCard({ event, organizer, onClick }) {
+function EventCard({ event, organizer, onClick, onEdit, onDelete, isOwner }) {
   const formatDate = (date) => {
     return format(new Date(date), 'dd/MM/yyyy HH:mm');
   };
@@ -15,6 +22,12 @@ function EventCard({ event, organizer, onClick }) {
     const end = new Date(event.endDate);
     const diffInHours = (end - start) / (1000 * 60 * 60);
     return Math.round(diffInHours);
+  };
+
+  const handleCardClick = (e) => {
+    // Prevent click when clicking action buttons
+    if (e.target.closest('.event-actions')) return;
+    onClick();
   };
 
   return (
@@ -28,7 +41,7 @@ function EventCard({ event, organizer, onClick }) {
         }}>
           <Image
             alt={event.eventName}
-            src={'https://fptsoftware.com/-/media/project/fpt-software/fso/newsroom/event-calendar/fvn/new-update/lp-thumbnail-1200x628tv-2.jpg?modified=20231127100130'}
+            src={event.img}
             style={{
               width: '100%',
               height: '100%',
@@ -58,7 +71,7 @@ function EventCard({ event, organizer, onClick }) {
       bodyStyle={{
         padding: "20px",
       }}
-      onClick={onClick}
+      onClick={handleCardClick}
     >
       <Card.Meta
         title={
@@ -138,6 +151,31 @@ function EventCard({ event, organizer, onClick }) {
           {organizer ? `${organizer?.firstName} ${organizer?.lastName}` : "Đang tải..."}
         </Text>
       </div>
+
+      {isOwner && (
+        <div className="event-actions" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            Sửa
+          </Button>
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          >
+            Xóa
+          </Button>
+        </div>
+      )}
 
       <Button
         type="primary"

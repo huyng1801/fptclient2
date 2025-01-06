@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Input, Typography } from "antd";
+import { Row, Col, Input, Typography, Button } from "antd";
 import { useNavigate } from "react-router-dom";
-import UserLayout from "../../layouts/UserLayout/UserLayout";
+import UserLayout from "../../layouts/UserLayout";
 import EventService from "../../services/EventService";
 import UserService from "../../services/UserService";
 import EventCard from "../../components/EventCard/EventCard";
@@ -28,6 +28,9 @@ const styles = {
     marginBottom: '32px',
     height: '48px',
     fontSize: '16px',
+  },
+  createButton: {
+    marginTop: '32px',
   }
 };
 
@@ -97,7 +100,14 @@ function ListEventPage() {
           onChange={handleSearch}
           style={styles.searchInput}
         />
-
+      {/* Create Event Button */}
+      <Button 
+          type="primary" 
+          onClick={() => navigate("/create-event")} 
+          style={styles.createButton}
+        >
+          Tạo sự kiện mới
+        </Button>
         <Row gutter={[24, 24]}>
           {filteredEvents.map((event) => (
             <Col key={event.eventId} xs={24} sm={24} md={12} lg={12} xl={8}>

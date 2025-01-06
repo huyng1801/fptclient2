@@ -77,4 +77,5 @@ export default {
   getPostById,
   getAllPosts,
   updatePost,
+  deletePost
 };

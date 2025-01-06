@@ -1,5 +1,5 @@
-import React from 'react';
-import { Card, Typography, Tag, Space, Button, Tooltip, Divider } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Typography, Tag, Space, Button, Tooltip } from 'antd';
 import {
   EnvironmentOutlined,
   ProfileOutlined,
@@ -10,10 +10,31 @@ import {
   ClockCircleOutlined,
   ArrowRightOutlined,
 } from '@ant-design/icons';
+import UserService from '../../services/UserService';
 
 const { Text, Paragraph, Title } = Typography;
 
 function JobCard({ job, onClick }) {
+  const [creator, setCreator] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCreator = async () => {
+      try {
+        if (job.userId) {
+          const userData = await UserService.getUser(job.userId);
+          setCreator(userData);
+        }
+      } catch (error) {
+        console.error('Error fetching job creator:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCreator();
+  }, [job.userId]);
+
   const styles = {
     card: {
       marginBottom: "20px",
@@ -121,7 +142,14 @@ function JobCard({ job, onClick }) {
           {job.jobTitle}
         </Title>
         <div style={styles.companyInfo}>
-          <TeamOutlined /> Tên công ty
+          <TeamOutlined /> 
+          {loading ? (
+            "Đang tải..."
+          ) : creator ? (
+            `${creator.firstName} ${creator.lastName}`
+          ) : (
+            "Không có thông tin"
+          )}
         </div>
       </div>
 
@@ -154,14 +182,10 @@ function JobCard({ job, onClick }) {
           <Text>{job.location}</Text>
         </div>
 
-        <Divider style={{ margin: "12px 0" }} />
-
         <div style={styles.infoItem}>
           <ReadOutlined style={{ ...styles.icon, color: "#722ed1" }} />
           <Text>{job.requirements}</Text>
         </div>
-
-        <Divider style={{ margin: "12px 0" }} />
 
         <div style={styles.infoItem}>
           <SafetyOutlined style={{ ...styles.icon, color: "#52c41a" }} />

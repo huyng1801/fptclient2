@@ -3,7 +3,7 @@ import { Form, Input, Button, Select, Typography, message, InputNumber, Card, Ro
 import { UserOutlined, DollarOutlined, EnvironmentOutlined, FileTextOutlined, BulbOutlined, GiftOutlined } from '@ant-design/icons';
 import JobPostService from '../../services/JobPostService';
 import MajorCodeService from '../../services/MajorCodeService';
-import UserLayout from '../../layouts/UserLayout/UserLayout';
+import UserLayout from '../../layouts/UserLayout';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;

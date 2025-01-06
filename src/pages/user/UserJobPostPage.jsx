@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Layout, Typography, Button, Row, Col, Spin, notification, Input } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import UserLayout from '../../layouts/UserLayout/UserLayout';
+import UserLayout from '../../layouts/UserLayout';
 import JobCard from '../../components/JobCard/JobCard';
 import JobPostService from '../../services/JobPostService';
 import useFetchData from '../../hooks/useFetchData';

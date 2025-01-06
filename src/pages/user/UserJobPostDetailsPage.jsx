@@ -10,7 +10,7 @@ import {
   TagOutlined,
   FileOutlined
 } from '@ant-design/icons';
-import UserLayout from '../../layouts/UserLayout/UserLayout';
+import UserLayout from '../../layouts/UserLayout';
 import JobPostService from '../../services/JobPostService';
 import CVSelectionModal from '../../components/UserJobPostDetails/CVSelectionModal';
 import JobApplicationService from '../../services/JobApplicationService';

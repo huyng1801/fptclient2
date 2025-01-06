@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Typography, Spin, Alert, Input, Button, Row, Col, Select } from "antd";
 import { PagingListItem } from "../../components/PagingListItem";
 import { PostCard } from "../../components/PostSection/PostCard";
+import MajorCodeService from "../../services/MajorCodeService";
 import PostService from "../../services/PostService";
-import UserLayout from "../../layouts/UserLayout/UserLayout";
+import UserLayout from "../../layouts/UserLayout";
 
 const { Option } = Select;
 
 const styles = {
-
   errorAlert: {
     marginBottom: 20
   },
@@ -40,7 +40,7 @@ const styles = {
   },
   sortSection: {
     display: "flex",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     marginBottom: "20px"
   },
   postGrid: {
@@ -53,22 +53,30 @@ const styles = {
   }
 };
 
-const categories = [
-  { key: "tech", label: "Công nghệ" },
-  { key: "health", label: "Sức khỏe" },
-  { key: "business", label: "Kinh doanh" }
-];
-
 function ListPostPage() {
   const [posts, setPosts] = useState([]);
+  const [majors, setMajors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState({ category: "", search: "" });
+  const [filter, setFilter] = useState({ majorId: "", title: "" });
   const [sort, setSort] = useState("dateDesc");
   const itemsPerPage = 6;
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchMajors = async () => {
+      try {
+        const response = await MajorCodeService.getAllMajorCodes();
+        setMajors(response.items);
+      } catch (err) {
+        console.error("Error loading majors:", err);
+      }
+    };
+
+    fetchMajors();
+  }, []); 
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -79,11 +87,7 @@ function ListPostPage() {
           page: currentPage,
           size: itemsPerPage,
         };
-        const response = await PostService.getAllPosts(
-          filter,
-          pagingModel,
-          sort
-        );
+        const response = await PostService.getAllPosts(filter, pagingModel, sort);
         setPosts(response.items);
         setTotalPages(response.totalPages);
       } catch (err) {
@@ -115,91 +119,107 @@ function ListPostPage() {
     setSort(value);
   };
 
-  const handleCategoryClick = (category) => {
+  const handleCategoryClick = (majorId) => {
     setFilter((prev) => ({
       ...prev,
-      category,
+      majorId: majorId === "all" ? "" : majorId, // If "Tất cả" is selected, reset the major filter
     }));
+  };
+
+  const handleSearchClick = () => {
+    // Trigger fetch with the current filter values
+    setCurrentPage(1); // Reset to the first page on search
   };
 
   return (
     <UserLayout>
-        {error && (
-          <Alert
-            message={error}
-            type="error"
-            showIcon
-            style={styles.errorAlert}
-          />
-        )}
+      {error && (
+        <Alert message={error} type="error" showIcon style={styles.errorAlert} />
+      )}
 
-        {loading ? (
-          <div style={styles.loadingContainer}>
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={24} md={8} lg={6}>
-              <div style={styles.filterSection}>
-                <h3 style={styles.filterTitle}>Bộ lọc</h3>
-                <Input
-                  placeholder="Tìm kiếm bài viết"
-                  value={filter.search}
-                  onChange={(e) => handleFilterChange(e.target.value, "search")}
-                  style={styles.searchInput}
-                />
+      {loading ? (
+        <div style={styles.loadingContainer}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={24} md={8} lg={6}>
+            <div style={styles.filterSection}>
+              <h3 style={styles.filterTitle}>Bộ lọc</h3>
+              <Input
+                placeholder="Tìm kiếm bài viết"
+                value={filter.title}
+                onChange={(e) => handleFilterChange(e.target.value, "title")}
+                style={styles.searchInput}
+              />
+              <Button
+                type="primary"
+                onClick={handleSearchClick}
+                style={{ marginBottom: "15px", width: "100%" }}
+              >
+                Tìm kiếm
+              </Button>
 
-                <div>
-                  <h4 style={styles.filterTitle}>Danh mục</h4>
-                  {categories.map(({ key, label }) => (
-                    <Button
-                      key={key}
-                      type={filter.category === key ? "primary" : "default"}
-                      onClick={() => handleCategoryClick(key)}
-                      style={styles.categoryButton}
-                    >
-                      {label}
-                    </Button>
+              <div>
+                <h4 style={styles.filterTitle}>Danh mục</h4>
+                <Select
+                  value={filter.majorId || "all"}
+                  onChange={(value) => handleCategoryClick(value)}
+                  style={{ width: "100%" }}
+                >
+                  <Option value="all">Tất cả</Option>
+                  {majors.map((major) => (
+                    <Option key={major.majorId} value={major.majorId}>
+                      {major.majorName}
+                    </Option>
                   ))}
-                </div>
+                </Select>
               </div>
-            </Col>
+            </div>
+          </Col>
 
-            <Col xs={24} sm={24} md={16} lg={18}>
-              <div style={styles.postsSection}>
-                <div style={styles.sortSection}>
-                  <Select
-                    defaultValue={sort}
-                    onChange={handleSortChange}
-                    style={{ width: "200px" }}
-                  >
-                    <Option value="dateDesc">Mới nhất</Option>
-                    <Option value="dateAsc">Cũ nhất</Option>
-                    <Option value="titleAsc">Tên A-Z</Option>
-                    <Option value="titleDesc">Tên Z-A</Option>
-                  </Select>
-                </div>
-
-                <div style={styles.postGrid}>
-                  {posts.map((post) => (
-                    <div key={post.postId} style={styles.postItem}>
-                      <PostCard
-                        item={post}
-                        onClick={() => handlePostClick(post.postId)}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <PagingListItem
-                  handlePageChange={handlePageChange}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                />
+          <Col xs={24} sm={24} md={16} lg={18}>
+            <div style={styles.postsSection}>
+              <div style={styles.sortSection}>
+              <Button 
+          type="primary" 
+          onClick={() => navigate("/create-post")} 
+          style={styles.createButton}
+        >
+          Tạo sự bài viết mới
+        </Button>
+                <Select
+                  defaultValue={sort}
+                  onChange={handleSortChange}
+                  style={{ width: "200px" }}
+                >
+                  <Option value="dateDesc">Mới nhất</Option>
+                  <Option value="dateAsc">Cũ nhất</Option>
+                  <Option value="titleAsc">Tên A-Z</Option>
+                  <Option value="titleDesc">Tên Z-A</Option>
+                </Select>
               </div>
-            </Col>
-          </Row>
-        )}
+
+              <div style={styles.postGrid}>
+                {posts.map((post) => (
+                  <div key={post.postId} style={styles.postItem}>
+                    <PostCard
+                      item={post}
+                      onClick={() => handlePostClick(post.postId)}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <PagingListItem
+                handlePageChange={handlePageChange}
+                currentPage={currentPage}
+                totalPages={totalPages}
+              />
+            </div>
+          </Col>
+        </Row>
+      )}
     </UserLayout>
   );
 }

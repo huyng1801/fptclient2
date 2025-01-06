@@ -23,13 +23,16 @@ import CreateEventPage from "./pages/user/CreateEventPage";
 import LoginPage from "./pages/user/LoginPage";
 import ListPostPage from "./pages/user/ListPostPage";
 import ListEventPage from "./pages/user/ListEventPage";
-import EventDetailsPageV2 from "./pages/user/EventDetailsPageV2";
-import PostDetailsPageV2 from "./pages/user/PostDetailsPageV2";
+import EventDetailsPage from "./pages/user/EventDetailsPage";
+import PostDetailsPage from "./pages/user/PostDetailsPage";
 import MentorDashboardPage from "./pages/user/MentorDashboard";
 import MentorRequestListPage from "./pages/user/MentorRequestListPage";
 import RequestDetailPage from "./pages/user/RequestDetailPage";
 import SchedulePage from "./pages/user/SchedulePage";
 import MentorRatingPage from "./pages/user/MentorRatingPage";
+import MyListPostPage from "./pages/user/MyListPostPage";
+import MyEventPage from "./pages/user/MyEventPage";
+import ProfilePage from "./pages/user/ProfilePage";
 
 function App() {
   return (
@@ -37,16 +40,19 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/list-post" element={<ListPostPage />} />
+        <Route path="/my-post" element={<MyListPostPage />} />
         <Route path="/list-event" element={<ListEventPage />} />
-        <Route path="/post/:postId" element={<PostDetailsPageV2 />} />
+        <Route path="/my-event" element={<MyEventPage />} />
+        <Route path="/post/:postId" element={<PostDetailsPage />} />
         <Route path="/mentor-dashboard" element={<MentorDashboardPage />} />
         <Route path="/mentor-requests" element={<MentorRequestListPage />} />
         <Route path="/request/:id" element={<RequestDetailPage />} />
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/rating" element={<MentorRatingPage />} />
-        <Route path="/event/:id" element={<EventDetailsPageV2 />} />
+        <Route path="/event/:id" element={<EventDetailsPage />} />
         <Route path="/create-post" element={<CreatePostPage />} />
         <Route path="/user-event" element={<UserEventPage />} />
         <Route path="/user-job-post" element={<UserJobPostPage />} />

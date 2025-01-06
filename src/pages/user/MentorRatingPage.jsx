@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Typography, Pagination } from "antd";
-import UserLayout from "../../layouts/UserLayout/UserLayout";
+import UserLayout from "../../layouts/UserLayout";
 import RatingCard from "../../components/Rating/RatingCard";
 
 const { Title } = Typography;

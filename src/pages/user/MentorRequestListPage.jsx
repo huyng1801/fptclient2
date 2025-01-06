@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Typography, Pagination } from "antd";
 import { useNavigate } from "react-router-dom";
-import UserLayout from "../../layouts/UserLayout/UserLayout";
+import UserLayout from "../../layouts/UserLayout";
 import RequestCard from "../../components/MentorRequest/RequestCard";
 
 const { Title } = Typography;

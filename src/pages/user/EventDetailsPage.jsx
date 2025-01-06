@@ -1,91 +1,349 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Card, Typography, List, Descriptions, Button } from 'antd';
-import UserLayout from '../../layouts/UserLayout';
+import React, { useEffect, useState } from "react";
+import { Layout, Spin, Card, Typography, Avatar, Button, message, Rate, Input, List, Form } from "antd";
+import { useParams } from "react-router-dom";
+import {
+  UserOutlined,
+  ClockCircleOutlined,
+  EnvironmentOutlined,
+  CalendarOutlined,
+  TeamOutlined,
+  MessageOutlined,
+  StarOutlined,
+} from "@ant-design/icons";
+import { format } from "date-fns";
+import UserLayout from "../../layouts/UserLayout";
+import EventService from "../../services/EventService";
+import UserJoinEventService from "../../services/UserJoinEventService";
+import UserService from "../../services/UserService";
 
+const { Title, Text, Paragraph } = Typography;
+const { TextArea } = Input;
 
-const { Title } = Typography;
+const styles = {
+  mainCard: {
+    borderRadius: "16px",
+    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+    border: "1px solid #f0f0f0",
+    overflow: "hidden",
+    marginBottom: "24px",
+  },
+  header: {
+    padding: "24px",
+    borderBottom: "1px solid #f0f0f0",
+  },
+  title: {
+    fontSize: "32px",
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: "24px",
+    lineHeight: 1.4,
+  },
+  imageContainer: {
+    borderRadius: "12px",
+    overflow: "hidden",
+    marginBottom: "24px",
+  },
+  infoTable: {
+    width: "100%",
+    background: "#fafafa",
+    borderRadius: "12px",
+    padding: "20px",
+  },
+  infoRow: {
+    display: "flex",
+    alignItems: "flex-start",
+    padding: "12px 0",
+    borderBottom: "1px solid #f0f0f0",
+  },
+  infoLabel: {
+    width: "140px",
+    fontWeight: "600",
+    color: "#666",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  infoValue: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    color: "#333",
+  },
+  joinButton: {
+    marginTop: "24px",
+    width: "100%",
+    height: "48px",
+    fontSize: "16px",
+  },
+  ratingSection: {
+    marginTop: "24px",
+    padding: "20px",
+    background: "#f9f9f9",
+    borderRadius: "8px",
+  },
+  participantsList: {
+    marginTop: "24px",
+  },
+  participantCard: {
+    padding: "16px",
+    borderRadius: "8px",
+    marginBottom: "16px",
+    background: "#fff",
+    border: "1px solid #f0f0f0",
+  },
+  loadingContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "400px",
+  },
+};
 
-const EventDetailsPage = () => {
-  const { eventId } = useParams();
+function EventDetailsPage() {
+  const { id } = useParams();
   const [eventDetails, setEventDetails] = useState(null);
-  const [userJoinEvents, setUserJoinEvents] = useState([]);
-
-  const mockEvent = {
-    EventId: parseInt(eventId, 10),
-    EventName: 'Hội thảo Công Nghệ 2024',
-    Description: 'Hội thảo về xu hướng công nghệ mới trong năm 2024.',
-    StartDate: '2024-11-20T09:00:00Z',
-    EndDate: '2024-11-20T17:00:00Z',
-    Location: 'Trung tâm Hội nghị Quốc gia',
-    Organizer: { Name: 'Công ty Công nghệ XYZ' }
-  };
-
-  const mockUserJoinEvents = [
-    {
-      Id: 1,
-      UserId: 101,
-      EventId: parseInt(eventId, 10),
-      Content: 'Buổi hội thảo rất bổ ích, tôi đã học được nhiều điều mới.',
-      CreatedAt: '2024-11-20T12:00:00Z',
-      Rating: 5,
-      CreatedBy: 'user123',
-      User: { UserName: 'Nguyen Van A' }
-    },
-    {
-      Id: 2,
-      UserId: 102,
-      EventId: parseInt(eventId, 10),
-      Content: 'Chương trình được tổ chức tốt và thông tin rất phong phú.',
-      CreatedAt: '2024-11-20T13:00:00Z',
-      Rating: 4,
-      CreatedBy: 'user456',
-      User: { UserName: 'Tran Thi B' }
-    }
-  ];
+  const [organizerDetails, setOrganizerDetails] = useState(null);
+  const [participants, setParticipants] = useState([]);
+  const [userJoinEvent, setUserJoinEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState(false);
+  const [form] = Form.useForm();
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
 
   useEffect(() => {
-    setEventDetails(mockEvent);
-    setUserJoinEvents(mockUserJoinEvents);
-  }, [eventId]);
+    const fetchEventData = async () => {
+      try {
+        const [event, participantsResponse] = await Promise.all([
+          EventService.getEventById(id),
+          UserJoinEventService.viewAllUserJoinEvents({ eventId: id })
+        ]);
+
+        setEventDetails(event);
+        setParticipants(participantsResponse.items);
+
+        if (event.organizerId) {
+          const organizer = await UserService.getUser(event.organizerId);
+          setOrganizerDetails(organizer);
+        }
+
+        if (userInfo?.userId) {
+          const userJoinResponse = await UserJoinEventService.viewAllUserJoinEvents({
+            eventId: id,
+            userId: userInfo.userId
+          });
+          
+          if (userJoinResponse.items.length > 0) {
+            setUserJoinEvent(userJoinResponse.items[0]);
+            form.setFieldsValue({
+              rating: userJoinResponse.items[0].rating,
+              content: userJoinResponse.items[0].content
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching event data:", error);
+        message.error("Không thể tải thông tin sự kiện");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEventData();
+  }, [id, userInfo?.userId]);
+
+  const handleJoinEvent = async () => {
+    if (!userInfo?.userId) {
+      message.error("Vui lòng đăng nhập để tham gia sự kiện");
+      return;
+    }
+
+    try {
+      setJoining(true);
+      const response = await UserJoinEventService.createUserJoinEvent({
+        userId: userInfo.userId,
+        eventId: parseInt(id)
+      });
+      
+      message.success("Đăng ký tham gia sự kiện thành công!");
+      setUserJoinEvent(response);
+    } catch (error) {
+      console.error("Error joining event:", error);
+      message.error("Không thể đăng ký tham gia sự kiện");
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const handleRatingSubmit = async (values) => {
+    try {
+      await UserJoinEventService.updateUserJoinEvent(userJoinEvent.id, {
+        ...userJoinEvent,
+        ...values
+      });
+      
+      message.success("Cập nhật đánh giá thành công!");
+      setUserJoinEvent(prev => ({ ...prev, ...values }));
+    } catch (error) {
+      console.error("Error updating rating:", error);
+      message.error("Không thể cập nhật đánh giá");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={styles.loadingContainer}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!eventDetails) {
+    return <div>Không có thông tin sự kiện.</div>;
+  }
 
   return (
     <UserLayout>
-      <div style={{ padding: '24px' }}>
-        {eventDetails ? (
-          <Card title={eventDetails.EventName} style={{ marginBottom: '24px' }}>
-            <Descriptions bordered>
-              <Descriptions.Item label="Mô Tả">{eventDetails.Description}</Descriptions.Item>
-              <Descriptions.Item label="Ngày Bắt Đầu">{new Date(eventDetails.StartDate).toLocaleDateString()}</Descriptions.Item>
-              <Descriptions.Item label="Ngày Kết Thúc">{new Date(eventDetails.EndDate).toLocaleDateString()}</Descriptions.Item>
-              <Descriptions.Item label="Địa Điểm">{eventDetails.Location || 'Chưa xác định'}</Descriptions.Item>
-              <Descriptions.Item label="Người Tổ Chức">{eventDetails.Organizer ? eventDetails.Organizer.Name : 'Chưa có'}</Descriptions.Item>
-            </Descriptions>
-          </Card>
-        ) : (
-          <Title level={4}>Đang tải chi tiết sự kiện...</Title>
-        )}
+      <Card style={styles.mainCard}>
+        <div style={styles.header}>
+          <Title level={1} style={styles.title}>
+            {eventDetails.eventName}
+          </Title>
 
-        <Title level={4}>Phản hồi từ người tham gia</Title>
-        <List
-          dataSource={userJoinEvents}
-          renderItem={(userJoinEvent) => (
-            <List.Item key={userJoinEvent.Id} style={{ padding: '16px', border: '1px solid #f0f0f0', borderRadius: '8px', marginBottom: '16px' }}>
-              <Card>
-                <Descriptions>
-                  <Descriptions.Item label="Người dùng">{userJoinEvent.User?.UserName || 'Ẩn danh'}</Descriptions.Item>
-                  <Descriptions.Item label="Nội dung">{userJoinEvent.Content}</Descriptions.Item>
-                  <Descriptions.Item label="Ngày tạo">{new Date(userJoinEvent.CreatedAt).toLocaleDateString()}</Descriptions.Item>
-                  <Descriptions.Item label="Đánh giá">{userJoinEvent.Rating || 'Không có'}</Descriptions.Item>
-                  <Descriptions.Item label="Tạo bởi">{userJoinEvent.CreatedBy || 'N/A'}</Descriptions.Item>
-                </Descriptions>
-              </Card>
-            </List.Item>
+          {eventDetails.img && (
+            <div style={styles.imageContainer}>
+              <img
+                src={eventDetails.img}
+                alt={eventDetails.eventName}
+                style={{ width: "100%", height: "400px", objectFit: "cover" }}
+              />
+            </div>
           )}
-        />
-      </div>
+
+          <div style={styles.infoTable}>
+            <div style={styles.infoRow}>
+              <span style={styles.infoLabel}>
+                <CalendarOutlined style={{ color: "#1890ff" }} /> Ngày bắt đầu
+              </span>
+              <span style={styles.infoValue}>
+                {format(new Date(eventDetails.startDate), "dd MMMM yyyy, HH:mm")}
+              </span>
+            </div>
+
+            <div style={styles.infoRow}>
+              <span style={styles.infoLabel}>
+                <ClockCircleOutlined style={{ color: "#52c41a" }} /> Ngày kết thúc
+              </span>
+              <span style={styles.infoValue}>
+                {format(new Date(eventDetails.endDate), "dd MMMM yyyy, HH:mm")}
+              </span>
+            </div>
+
+            <div style={styles.infoRow}>
+              <span style={styles.infoLabel}>
+                <EnvironmentOutlined style={{ color: "#f5222d" }} /> Địa điểm
+              </span>
+              <span style={styles.infoValue}>{eventDetails.location}</span>
+            </div>
+
+            <div style={styles.infoRow}>
+              <span style={styles.infoLabel}>
+                <TeamOutlined style={{ color: "#722ed1" }} /> Tổ chức
+              </span>
+              <span style={styles.infoValue}>
+                {organizerDetails ? (
+                  <>
+                    <Avatar src={organizerDetails.avatar} icon={<UserOutlined />} />
+                    <Text strong>{`${organizerDetails.firstName} ${organizerDetails.lastName}`}</Text>
+                    <Text type="secondary">({organizerDetails.email})</Text>
+                  </>
+                ) : (
+                  "Đang tải thông tin tổ chức..."
+                )}
+              </span>
+            </div>
+
+            <div style={{ ...styles.infoRow, border: "none" }}>
+              <span style={styles.infoLabel}>
+                <MessageOutlined style={{ color: "#faad14" }} /> Mô tả
+              </span>
+              <Paragraph style={styles.infoValue}>
+                {eventDetails.description}
+              </Paragraph>
+            </div>
+          </div>
+
+          {userJoinEvent ? (
+            <div style={styles.ratingSection}>
+              <Title level={4}>Đánh giá sự kiện</Title>
+              <Form
+                form={form}
+                onFinish={handleRatingSubmit}
+                initialValues={{
+                  rating: userJoinEvent.rating,
+                  content: userJoinEvent.content
+                }}
+              >
+                <Form.Item name="rating" label="Đánh giá">
+                  <Rate />
+                </Form.Item>
+                <Form.Item name="content" label="Nhận xét">
+                  <TextArea rows={4} placeholder="Chia sẻ cảm nhận của bạn về sự kiện..." />
+                </Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Cập nhật đánh giá
+                </Button>
+              </Form>
+            </div>
+          ) : (
+            <Button
+              type="primary"
+              size="large"
+              style={styles.joinButton}
+              onClick={handleJoinEvent}
+              loading={joining}
+              disabled={!userInfo?.userId}
+            >
+              {userInfo?.userId ? "Tham gia sự kiện" : "Đăng nhập để tham gia"}
+            </Button>
+          )}
+        </div>
+
+        <div style={styles.participantsList}>
+          <Title level={3}>
+            <TeamOutlined /> Người tham gia ({participants.length})
+          </Title>
+          <List
+            dataSource={participants}
+            renderItem={participant => (
+              <Card style={styles.participantCard}>
+                <List.Item>
+                  <List.Item.Meta
+                    avatar={<Avatar icon={<UserOutlined />} />}
+                    title={participant.user}
+                    description={
+                      <>
+                        {participant.rating && (
+                          <div>
+                            <Rate disabled defaultValue={participant.rating} />
+                          </div>
+                        )}
+                        {participant.content && (
+                          <div style={{ marginTop: 8 }}>
+                            {participant.content}
+                          </div>
+                        )}
+                      </>
+                    }
+                  />
+                </List.Item>
+              </Card>
+            )}
+          />
+        </div>
+      </Card>
     </UserLayout>
   );
-};
+}
 
 export default EventDetailsPage;

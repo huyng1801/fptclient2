@@ -5,14 +5,11 @@ import {
   ClockCircleOutlined,
   EyeOutlined,
   LikeOutlined,
-  MessageOutlined,
-  ShareAltOutlined,
-  FlagOutlined,
   BookOutlined,
   LockOutlined,
   UnlockOutlined,
 } from "@ant-design/icons";
-import UserLayout from "../../layouts/UserLayout/UserLayout";
+import UserLayout from "../../layouts/UserLayout";
 import { useParams } from "react-router-dom";
 import PostService from "../../services/PostService";
 import CommentService from "../../services/CommentService";
@@ -105,7 +102,7 @@ const styles = {
   },
 };
 
-function PostDetailsPageV2() {
+function PostDetailsPage() {
   const { postId } = useParams();
   const [postDetails, setPostDetails] = useState(null);
   const [author, setAuthor] = useState(null);
@@ -222,11 +219,15 @@ function PostDetailsPageV2() {
                 <ClockCircleOutlined style={{ color: "#52c41a" }} />
                 {format(new Date(postDetails.createdAt), "HH:mm")}
               </span>
+              <Button type="text" icon={<LikeOutlined />}>
+              
+            </Button>
+           
             </div>
 
             <div style={styles.tags}>
               <Tag color="blue">
-                <BookOutlined /> Major {postDetails.majorId}
+                <BookOutlined /> {postDetails.majorName}
               </Tag>
               <Tag color={postDetails.status === 'Published' ? 'green' : 'orange'}>
                 {postDetails.status}
@@ -243,20 +244,6 @@ function PostDetailsPageV2() {
             {postDetails.content}
           </Paragraph>
 
-          <div style={styles.actionBar}>
-            <Button type="text" icon={<LikeOutlined />}>
-              Thích
-            </Button>
-            <Button type="text" icon={<MessageOutlined />}>
-              Bình luận
-            </Button>
-            <Button type="text" icon={<ShareAltOutlined />}>
-              Chia sẻ
-            </Button>
-            <Button type="text" icon={<FlagOutlined />}>
-              Báo cáo
-            </Button>
-          </div>
         </Card>
 
         <CommentSection postId={postId} comments={comments} />
@@ -264,4 +251,4 @@ function PostDetailsPageV2() {
   );
 }
 
-export default PostDetailsPageV2;
+export default PostDetailsPage;

@@ -1,149 +1,104 @@
-import React, { useState, useEffect } from "react";
-import { Card, Typography, Tag, Avatar, Space, Tooltip } from "antd";
+import React, { useState } from "react";
+import { Card, Typography, Tag, Avatar, Space, Tooltip, Modal, Button, message } from "antd";
 import { 
   EyeOutlined, 
   FieldTimeOutlined, 
   UserOutlined,
   BookOutlined,
   LockOutlined,
-  UnlockOutlined
+  UnlockOutlined,
+  EditOutlined,
+  DeleteOutlined
 } from "@ant-design/icons";
 import { format } from 'date-fns';
-import UserService from "../../services/UserService";
+import PostService from "../../services/PostService";
 
 const { Title, Text, Paragraph } = Typography;
+const { confirm } = Modal;
 
-export const PostCard = ({ item, onClick }) => {
+export const PostCard = ({ item, onClick, onPostDeleted, onEdit }) => {
   const [user, setUser] = useState(null);
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
+  const isAuthor = userInfo?.userId === item.authorId;
 
-  useEffect(() => {
-    const fetchUser = async (authorId) => {
-      try {
-        const userData = await UserService.getUser(authorId);
-        setUser(userData);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      }
-    };
-
-    if (item.authorId) {
-      fetchUser(item.authorId);
-    }
-  }, [item.authorId]);
-
-  const styles = {
-    card: {
-      borderRadius: "16px",
-      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-      border: "1px solid #f0f0f0",
-      transition: "all 0.3s ease",
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-      marginBottom: "20px",
-    },
-    cardBody: {
-      padding: "24px",
-    },
-    header: {
-      display: "flex",
-      alignItems: "center",
-      marginBottom: "16px",
-      gap: "12px",
-    },
-    avatar: {
-      flexShrink: 0,
-    },
-    userInfo: {
-      flex: 1,
-    },
-    title: {
-      fontSize: "20px",
-      fontWeight: "600",
-      color: "#1a1a1a",
-      marginBottom: "12px",
-      cursor: "pointer",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      display: "-webkit-box",
-      WebkitLineClamp: 2,
-      WebkitBoxOrient: "vertical",
-    },
-    content: {
-      fontSize: "14px",
-      color: "#666",
-      marginBottom: "16px",
-    },
-    footer: {
-      marginTop: "auto",
-      padding: "16px 24px",
-      background: "#fafafa",
-      borderTop: "1px solid #f0f0f0",
-    },
-    stats: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
-    statItem: {
-      display: "flex",
-      alignItems: "center",
-      gap: "6px",
-      color: "#666",
-      fontSize: "13px",
-    },
-    icon: {
-      fontSize: "16px",
-      color: "#1890ff",
-    },
-    tags: {
-      marginTop: "12px",
-      display: "flex",
-      gap: "8px",
-    },
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    confirm({
+      title: 'Xác nhận xóa bài viết',
+      content: 'Bạn có chắc chắn muốn xóa bài viết này không?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      async onOk() {
+        try {
+          await PostService.deletePost(item.postId);
+          message.success('Xóa bài viết thành công');
+          if (onPostDeleted) {
+            onPostDeleted();
+          }
+        } catch (error) {
+          message.error('Không thể xóa bài viết. Vui lòng thử lại sau.');
+        }
+      },
+    });
   };
 
   return (
     <Card
-      style={styles.card}
-      bodyStyle={styles.cardBody}
+      className="rounded-xl shadow-md border border-gray-200 mb-5 hover:shadow-lg transition-shadow"
+      bodyStyle={{ padding: "24px" }}
       hoverable
       onClick={onClick}
     >
-      <div style={styles.header}>
+      <div className="flex items-center gap-3 mb-4">
         <Avatar 
           size={48} 
-          icon={<UserOutlined />} 
-          style={styles.avatar}
+          icon={<UserOutlined />}
           src={user?.avatarUrl}
         >
           {user?.firstName?.charAt(0)}
         </Avatar>
-        <div style={styles.userInfo}>
+        <div className="flex-1">
           <Text strong>
             {user ? `${user.firstName} ${user.lastName}` : "Loading..."}
           </Text>
           <br />
-          <Text type="secondary" style={{ fontSize: "12px" }}>
+          <Text type="secondary" className="text-sm">
             {format(new Date(item.createdAt), 'dd MMM yyyy, HH:mm')}
           </Text>
         </div>
+        {isAuthor && (
+          <Space>
+            <Button
+              icon={<EditOutlined />}
+              className="flex items-center gap-1 text-blue-500 bg-blue-50"
+              onClick={(e) => onEdit(item, e)}
+            >
+              Sửa
+            </Button>
+            <Button
+              icon={<DeleteOutlined />}
+              className="flex items-center gap-1 text-red-500 bg-red-50"
+              onClick={handleDelete}
+              danger
+            >
+              Xóa
+            </Button>
+          </Space>
+        )}
       </div>
 
-      <Title level={4} style={styles.title}>
+      <Title level={4} className="mb-3 line-clamp-2">
         {item.title}
       </Title>
 
-      <Paragraph
-        style={styles.content}
-        ellipsis={{ rows: 3 }}
-      >
+      <Paragraph className="text-gray-600 mb-4" ellipsis={{ rows: 3 }}>
         {item.content}
       </Paragraph>
 
-      <div style={styles.tags}>
+      <Space className="mb-4">
         <Tag color="blue">
-          <BookOutlined /> Major {item.majorId}
+          <BookOutlined /> {item.majorName}
         </Tag>
         <Tag color={item.status === 'Published' ? 'green' : 'orange'}>
           {item.status}
@@ -153,19 +108,19 @@ export const PostCard = ({ item, onClick }) => {
             {item.isPrivate ? <LockOutlined /> : <UnlockOutlined />}
           </Tag>
         </Tooltip>
-      </div>
+      </Space>
 
-      <div style={styles.footer}>
-        <Space style={styles.stats}>
+      <div className="border-t border-gray-100 pt-4 mt-4">
+        <Space className="justify-between w-full">
           <Tooltip title="Views">
-            <span style={styles.statItem}>
-              <EyeOutlined style={styles.icon} />
+            <span className="flex items-center gap-2 text-gray-600">
+              <EyeOutlined className="text-blue-500" />
               {item.views}
             </span>
           </Tooltip>
           <Tooltip title="Posted">
-            <span style={styles.statItem}>
-              <FieldTimeOutlined style={styles.icon} />
+            <span className="flex items-center gap-2 text-gray-600">
+              <FieldTimeOutlined className="text-green-500" />
               {format(new Date(item.createdAt), 'dd/MM/yyyy')}
             </span>
           </Tooltip>

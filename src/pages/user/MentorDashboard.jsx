@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Layout, Row, Col, Button, Typography, notification, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
-import UserLayout from "../../layouts/UserLayout/UserLayout";
+import UserLayout from "../../layouts/UserLayout";
 import MentorCard from "../../components/MentorDashboard/MentorCard";
 import RequestForm from "../../components/MentorDashboard/RequestForm";
 import { PagingListItem } from "../../components/PagingListItem";

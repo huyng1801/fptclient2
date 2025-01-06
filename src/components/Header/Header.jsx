@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Layout } from 'antd';
 import { useLocation } from 'react-router-dom';
 import PageTitle from './PageTitle';
-import SearchBar from './SearchBar';
 import IconsSection from './IconsSection';
 
 const { Header } = Layout;
@@ -21,8 +20,6 @@ const HeaderComponent = () => {
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
   const toggleNotifications = () => {
     setShowNotifications((prev) => !prev);
     if (showMenu) setShowMenu(false);
@@ -33,9 +30,7 @@ const HeaderComponent = () => {
     if (showNotifications) setShowNotifications(false);
   };
 
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-  };
+
 
   const currentPage = location.pathname === '/' 
     ? 'Home' 
@@ -44,10 +39,7 @@ const HeaderComponent = () => {
   return (
     <Header style={headerStyle}>
       <PageTitle title={currentPage} />
-      <SearchBar 
-        value={searchQuery}
-        onChange={handleSearch}
-      />
+
       <IconsSection
         onNotificationToggle={toggleNotifications}
         onMenuToggle={toggleMenu}

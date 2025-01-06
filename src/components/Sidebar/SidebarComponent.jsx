@@ -57,8 +57,14 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
           <MenuItem icon={<FileTextOutlined />} path="/list-post" itemKey="2">
             Bài viết
           </MenuItem>
+          <MenuItem icon={<FileTextOutlined />} path="/my-post" itemKey="2">
+            Bài viết của tôi
+          </MenuItem>
           <MenuItem icon={<CalendarOutlined />} path="/list-event" itemKey="3">
             Sự kiện
+          </MenuItem>
+          <MenuItem icon={<CalendarOutlined />} path="/my-event" itemKey="3">
+            Sự kiện của tôi
           </MenuItem>
         </MenuSection>
 
