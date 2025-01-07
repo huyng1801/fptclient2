@@ -15,7 +15,7 @@ import UserLayout from "../../layouts/UserLayout";
 import EventService from "../../services/EventService";
 import UserJoinEventService from "../../services/UserJoinEventService";
 import UserService from "../../services/UserService";
-
+import moment from 'moment';
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
@@ -105,11 +105,15 @@ function EventDetailsPage() {
   const [eventDetails, setEventDetails] = useState(null);
   const [organizerDetails, setOrganizerDetails] = useState(null);
   const [participants, setParticipants] = useState([]);
+  const [participantDetails, setParticipantDetails] = useState({});
   const [userJoinEvent, setUserJoinEvent] = useState(null);
+  
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [form] = Form.useForm();
   const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
+  const [canJoin, setCanJoin] = useState(true);
+  const [canRate, setCanRate] = useState(true);
 
   useEffect(() => {
     const fetchEventData = async () => {
@@ -122,11 +126,31 @@ function EventDetailsPage() {
         setEventDetails(event);
         setParticipants(participantsResponse.items);
 
+        // Fetch organizer details
         if (event.organizerId) {
           const organizer = await UserService.getUser(event.organizerId);
           setOrganizerDetails(organizer);
         }
+      
+        // Fetch participant details
+        const participantDetailsPromises = participantsResponse.items.map(async (participant) => {
+          try {
+            const userDetails = await UserService.getUser(participant.userId);
+            return { userId: participant.userId, details: userDetails };
+          } catch (error) {
+            console.error(`Error fetching user ${participant.userId} details:`, error);
+            return { userId: participant.userId, details: null };
+          }
+        });
 
+        const participantDetailsResults = await Promise.all(participantDetailsPromises);
+        const participantDetailsMap = {};
+        participantDetailsResults.forEach(({ userId, details }) => {
+          participantDetailsMap[userId] = details;
+        });
+        setParticipantDetails(participantDetailsMap);
+
+        // Check if current user has joined
         if (userInfo?.userId) {
           const userJoinResponse = await UserJoinEventService.viewAllUserJoinEvents({
             eventId: id,
@@ -141,9 +165,23 @@ function EventDetailsPage() {
             });
           }
         }
+        const currentDate = moment().format("YYYY-MM-DDTHH:mm:ss");
+        const eventEndDate = moment(eventDetails?.endDate).format("YYYY-MM-DDTHH:mm:ss");
+        
+        // Check if the event is over (past the end date)
+        if (moment(currentDate).isAfter(eventEndDate)) {
+          setCanJoin(false);
+        }
+        
+        // Check if the event has ended for more than 7 days
+        const ratingDeadline = moment(eventEndDate).add(7, 'days').format("YYYY-MM-DDTHH:mm:ss");
+        if (moment(currentDate).isAfter(ratingDeadline)) {
+          setCanRate(false);
+        }
+ 
       } catch (error) {
         console.error("Error fetching event data:", error);
-        message.error("Không thể tải thông tin sự kiện");
+        // message.error("Không thể tải thông tin sự kiện");
       } finally {
         setLoading(false);
       }
@@ -253,7 +291,7 @@ function EventDetailsPage() {
               <span style={styles.infoValue}>
                 {organizerDetails ? (
                   <>
-                    <Avatar src={organizerDetails.avatar} icon={<UserOutlined />} />
+                    <Avatar src={organizerDetails.profilePicture} icon={<UserOutlined />} />
                     <Text strong>{`${organizerDetails.firstName} ${organizerDetails.lastName}`}</Text>
                     <Text type="secondary">({organizerDetails.email})</Text>
                   </>
@@ -290,7 +328,7 @@ function EventDetailsPage() {
                 <Form.Item name="content" label="Nhận xét">
                   <TextArea rows={4} placeholder="Chia sẻ cảm nhận của bạn về sự kiện..." />
                 </Form.Item>
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" disabled={!canRate}>
                   Cập nhật đánh giá
                 </Button>
               </Form>
@@ -302,7 +340,7 @@ function EventDetailsPage() {
               style={styles.joinButton}
               onClick={handleJoinEvent}
               loading={joining}
-              disabled={!userInfo?.userId}
+              disabled={userInfo?.userId === eventDetails.organizerId || !canJoin}
             >
               {userInfo?.userId ? "Tham gia sự kiện" : "Đăng nhập để tham gia"}
             </Button>
@@ -319,8 +357,17 @@ function EventDetailsPage() {
               <Card style={styles.participantCard}>
                 <List.Item>
                   <List.Item.Meta
-                    avatar={<Avatar icon={<UserOutlined />} />}
-                    title={participant.user}
+                    avatar={
+                      <Avatar 
+                        icon={<UserOutlined />} 
+                        src={participantDetails[participant.userId]?.profilePicture}
+                      />
+                    }
+                    title={
+                      participantDetails[participant.userId] 
+                        ? `${participantDetails[participant.userId].firstName} ${participantDetails[participant.userId].lastName}`
+                        : "Loading..."
+                    }
                     description={
                       <>
                         {participant.rating && (

@@ -74,7 +74,7 @@ function MentorDashboardPage() {
       setLoading(true);
    
         const filter = {
-          isMentor: true,
+          roleId: 2,
         };
 
         const response = await UserService.getAllUsers(filter, {
@@ -135,7 +135,7 @@ function MentorDashboardPage() {
     <UserLayout>
       <div>
         <div style={styles.header}>
-          <Title level={2}>Mentor</Title>
+          <Title level={2}>Người dùng</Title>
         </div>
         
         <div style={styles.content}>

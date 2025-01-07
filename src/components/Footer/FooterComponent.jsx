@@ -11,7 +11,7 @@ const footerStyle = {
 };
 
 const dividerStyle = {
-  borderColor: '#FFB400',
+  borderColor: '#f05123',
   margin: '30px 0',
   opacity: 0.5
 };

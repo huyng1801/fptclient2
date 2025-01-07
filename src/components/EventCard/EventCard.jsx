@@ -20,12 +20,17 @@ function EventCard({ event, organizer, onClick, onEdit, onDelete, isOwner }) {
   const getDurationInHours = () => {
     const start = new Date(event.startDate);
     const end = new Date(event.endDate);
-    const diffInHours = (end - start) / (1000 * 60 * 60);
-    return Math.round(diffInHours);
+    const now = new Date();
+    
+    if (end < now) {
+      return "Đã kết thúc";
+    }
+    
+    const diffInHours = Math.round((end - start) / (1000 * 60 * 60));
+    return `Bắt đầu sau ${diffInHours}h`;
   };
 
   const handleCardClick = (e) => {
-    // Prevent click when clicking action buttons
     if (e.target.closest('.event-actions')) return;
     onClick();
   };
@@ -56,7 +61,7 @@ function EventCard({ event, organizer, onClick, onEdit, onDelete, isOwner }) {
             padding: '4px 8px',
             fontSize: '12px'
           }}>
-            {getDurationInHours()}h Thời gian
+            {getDurationInHours()}
           </Tag>
         </div>
       }
@@ -163,16 +168,6 @@ function EventCard({ event, organizer, onClick, onEdit, onDelete, isOwner }) {
             }}
           >
             Sửa
-          </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-          >
-            Xóa
           </Button>
         </div>
       )}

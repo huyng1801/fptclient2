@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Typography, Button, Row, Col, Spin, notification, Input } from 'antd';
+import { Layout, Typography, Button, Row, Col, Spin, notification, Input, Checkbox } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import UserLayout from '../../layouts/UserLayout';
@@ -24,10 +24,14 @@ const styles = {
   },
   searchBar: {
     marginBottom: '24px',
+    display: 'flex',
+    gap: '16px',
+    alignItems: 'center',
   },
   searchInput: {
     borderRadius: '8px',
     height: '40px',
+    flex: 1,
   },
   createButton: {
     height: '40px',
@@ -51,7 +55,10 @@ const styles = {
 const UserJobPostPage = () => {
   const { data: jobPosts, loading, error } = useFetchData(JobPostService.getAllJobPosts);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMyJobs, setShowMyJobs] = useState(false);
   const navigate = useNavigate();
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
+  const isRecruiter = userInfo?.roleName === 'Recruiter';
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -75,10 +82,15 @@ const UserJobPostPage = () => {
   const getFilteredJobs = () => {
     if (!jobPosts) return [];
     
-    return jobPosts.filter(job =>
-      job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.location?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return jobPosts.filter(job => {
+      const matchesSearch = 
+        job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.location?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesUser = !showMyJobs || job.userId === userInfo.userId;
+      
+      return matchesSearch && matchesUser;
+    });
   };
 
   if (error) {
@@ -105,14 +117,16 @@ const UserJobPostPage = () => {
       <div style={styles.container}>
         <div style={styles.header}>
           <Title level={2} style={styles.title}>Danh Sách Việc Làm</Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreateJob}
-            style={styles.createButton}
-          >
-            Tạo Việc Làm Mới
-          </Button>
+          {isRecruiter && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreateJob}
+              style={styles.createButton}
+            >
+              Tạo Việc Làm Mới
+            </Button>
+          )}
         </div>
 
         <div style={styles.searchBar}>
@@ -124,6 +138,14 @@ const UserJobPostPage = () => {
             style={styles.searchInput}
             allowClear
           />
+          {isRecruiter && (
+            <Checkbox
+              checked={showMyJobs}
+              onChange={(e) => setShowMyJobs(e.target.checked)}
+            >
+              Công việc của tôi
+            </Checkbox>
+          )}
         </div>
 
         {filteredJobs.length > 0 ? (
@@ -140,7 +162,7 @@ const UserJobPostPage = () => {
           </Row>
         ) : (
           <div style={styles.noResults}>
-            {searchQuery 
+            {searchQuery || showMyJobs
               ? 'Không tìm thấy việc làm phù hợp với tìm kiếm của bạn'
               : 'Chưa có việc làm nào được đăng tải'}
           </div>

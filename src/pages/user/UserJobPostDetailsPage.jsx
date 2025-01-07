@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Typography, Spin, notification, Space, Tag, Descriptions, Form, Input, Button, Card } from 'antd';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Typography, Spin, notification, Space, Tag, Descriptions, Form, Input, Button, Card, Avatar } from 'antd';
 import { 
   EnvironmentOutlined, 
   ClockCircleOutlined, 
@@ -14,6 +14,8 @@ import UserLayout from '../../layouts/UserLayout';
 import JobPostService from '../../services/JobPostService';
 import CVSelectionModal from '../../components/UserJobPostDetails/CVSelectionModal';
 import JobApplicationService from '../../services/JobApplicationService';
+import CVService from '../../services/CVService';
+import UserService from "../../services/UserService";
 const { Title, Text, Paragraph } = Typography;
 
 const styles = {
@@ -63,32 +65,79 @@ const styles = {
 
 const UserJobPostDetailsPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [jobPost, setJobPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCV, setSelectedCV] = useState(null);
   const [showCVModal, setShowCVModal] = useState(false);
+  const [hasCV, setHasCV] = useState(true); // Track if user has any CVs
   const [form] = Form.useForm();
-  useEffect(() => {
-    const fetchJobPost = async () => {
-      try {
-        const data = await JobPostService.getJobPostById(id);
-  
-        setJobPost(data);
-      } catch (err) {
-        setError(err);
-        notification.error({
-          message: 'Lỗi',
-          description: 'Không thể tải thông tin việc làm. Vui lòng thử lại sau.',
-        });
-      } finally {
-        setLoading(false);
+  const [creator, setCreator] = useState(null);
+useEffect(() => {
+  const fetchJobPost = async () => {
+    setLoading(true); // Ensure loading state is set before starting
+    try {
+      await checkUserCV(); // Ensure this call completes before proceeding
+      
+      // Fetch job post data
+      const data = await JobPostService.getJobPostById(id);
+      setJobPost(data);
+    
+      
+      // Fetch creator details if jobPost has a valid userId
+      if (data?.userId) {
+        const userData = await UserService.getUser(data.userId);
+        setCreator(userData);
       }
-    };
+    
+    } catch (err) {
+      setError(err); // Capture error for further handling
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không thể tải thông tin việc làm. Vui lòng thử lại sau.',
+      });
+    } finally {
+      setLoading(false); // Ensure loading state is updated in both success and error cases
+    }
+  };
 
-    fetchJobPost();
-  }, [id]);
+  fetchJobPost(); // Execute the fetch function
+}, [id]); // Re-run the effect only when `id` changes
 
+  const checkUserCV = async () => {
+    try {
+      const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+      if (!userInfo?.userId) {
+        notification.error({
+          message: 'Chưa đăng nhập',
+          description: 'Vui lòng đăng nhập để ứng tuyển.',
+        });
+        navigate('/login');
+        return false;
+      }
+
+      const response = await CVService.getCVByUserId(userInfo.userId);
+
+      
+      if (!response?.data || (Array.isArray(response.data) && response.data.length === 0)) {
+        setHasCV(false);
+        notification.info({
+          message: 'Chưa có CV',
+          description: 'Bạn cần tạo CV trước khi ứng tuyển.',
+        });
+        navigate('/cv');
+        return false;
+      }
+      
+      setHasCV(true);
+      return true;
+    } catch (error) {
+      navigate('/cv');
+      console.error('Error checking CV:', error);
+      return false;
+    }
+  };
 
   const handleCVSelect = (cv) => {
     setSelectedCV(cv);
@@ -96,6 +145,9 @@ const UserJobPostDetailsPage = () => {
   };
 
   const handleApply = async (values) => {
+    const hasValidCV = await checkUserCV();
+    if (!hasValidCV) return;
+
     if (!selectedCV) {
       notification.error({
         message: 'Chưa chọn CV',
@@ -123,10 +175,18 @@ const UserJobPostDetailsPage = () => {
     } catch (error) {
       notification.error({
         message: 'Lỗi ứng tuyển',
-        description: 'Không thể gửi đơn ứng tuyển của bạn!',
+        description: 'Bạn đã  ứng tuyển công việc này rồi!',
       });
     }
   };
+
+  const handleShowCVModal = async () => {
+    const hasValidCV = await checkUserCV();
+    if (hasValidCV) {
+      setShowCVModal(true);
+    }
+  };
+
   if (loading) {
     return (
       <UserLayout>
@@ -202,7 +262,19 @@ const UserJobPostDetailsPage = () => {
           <div style={styles.infoGrid}>
             <Descriptions bordered column={1}>
               <Descriptions.Item label={<><UserOutlined /> Người đăng</>}>
-                {jobPost.createdBy}
+              <Avatar 
+                size={48} 
+                icon={<UserOutlined />}
+                src={creator?.profilePicture}
+              >
+                {creator?.firstName?.charAt(0)}
+              </Avatar>
+              <div className="flex-1">
+                <Text strong>
+                {creator ? `${creator.firstName} ${creator.lastName}` : "Đang tải..."}
+                </Text>
+            
+              </div>
               </Descriptions.Item>
               <Descriptions.Item label={<><TagOutlined /> Mã công việc</>}>
                 {jobPost.jobPostId}
@@ -211,66 +283,68 @@ const UserJobPostDetailsPage = () => {
                 {new Date(jobPost.updatedAt).toLocaleString()}
               </Descriptions.Item>
               <Descriptions.Item label="Chuyên ngành">
-                {jobPost.majorId}
+                {jobPost.majorName}
               </Descriptions.Item>
             </Descriptions>
           </div>
 
           {/* Application Form */}
           <Form
-            form={form}
-            name="applyForm"
-            layout="vertical"
-            style={styles.applicationForm}
-            onFinish={handleApply}
-          >
-            <Card title="Thông tin ứng tuyển">
-              <Space direction="vertical" style={{ width: '100%' }}>
-                {selectedCV ? (
-                  <Card size="small" style={{ marginBottom: 16 }}>
-                    <Space>
-                      <FileOutlined />
-                      <span>{selectedCV.fullName} - {selectedCV.jobLevel}</span>
-                      <Button size="small" onClick={() => setShowCVModal(true)}>
-                        Đổi CV khác
-                      </Button>
-                    </Space>
-                  </Card>
-                ) : (
-                  <Button 
-                    type="dashed" 
-                    onClick={() => setShowCVModal(true)}
-                    icon={<FileOutlined />}
-                    block
-                    style={{ marginBottom: 16 }}
-                  >
-                    Chọn CV của bạn
+        form={form}
+        name="applyForm"
+        layout="vertical"
+        style={styles.applicationForm}
+        onFinish={handleApply}
+      >
+        <Card title="Thông tin ứng tuyển">
+          <Space direction="vertical" style={{ width: '100%' }}>
+            {selectedCV ? (
+              <Card size="small" style={{ marginBottom: 16 }}>
+                <Space>
+                  <FileOutlined />
+                  <span>{selectedCV.fullName} - {selectedCV.jobLevel}</span>
+                  <Button size="small" onClick={handleShowCVModal}>
+                    Đổi CV khác
                   </Button>
-                )}
+                </Space>
+              </Card>
+            ) : (
+              <Button 
+                type="dashed" 
+                onClick={handleShowCVModal}
+                icon={<FileOutlined />}
+                block
+                style={{ marginBottom: 16 }}
+              >
+                Chọn CV của bạn
+              </Button>
+            )}
 
-                <Form.Item
-                  label="Thư xin việc"
-                  name="coverLetter"
-                  rules={[{ required: true, message: 'Vui lòng nhập thư xin việc của bạn!' }]}
-                >
-                  <Input.TextArea 
-                    rows={4} 
-                    placeholder="Viết thư xin việc của bạn ở đây..." 
-                  />
-                </Form.Item>
+            <Form.Item
+              label="Thư xin việc"
+              name="coverLetter"
+              rules={[{ required: true, message: 'Vui lòng nhập thư xin việc của bạn!' }]}
+            >
+              <Input.TextArea 
+                rows={4} 
+                placeholder="Viết thư xin việc của bạn ở đây..." 
+              />
+            </Form.Item>
 
-                <Button type="primary" htmlType="submit" block>
-                  Gửi đơn ứng tuyển
-                </Button>
-              </Space>
-            </Card>
-          </Form>
+            <Button type="primary" htmlType="submit" block>
+              Gửi đơn ứng tuyển
+            </Button>
+          </Space>
+        </Card>
+      </Form>
 
-          <CVSelectionModal
-            visible={showCVModal}
-            onSelect={handleCVSelect}
-            onCancel={() => setShowCVModal(false)}
-          />
+      {hasCV && (
+        <CVSelectionModal
+          visible={showCVModal}
+          onSelect={handleCVSelect}
+          onCancel={() => setShowCVModal(false)}
+        />
+      )}
         </div>
       </div>
     </UserLayout>

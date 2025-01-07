@@ -42,7 +42,7 @@ const CreateJobPostPage = () => {
       status: status,
       email: values.email,
       userId: JSON.parse(sessionStorage.getItem('userInfo'))?.userId || 0,
-      majorId: values.majorId,
+      majorId: values.majorId
     };
 
     try {

@@ -46,7 +46,8 @@ const AdminLayout = ({ children, headerName = 'Admin' }) => {
   };
 
   const breadcrumbStyle = {
-    margin: '16px 0'
+    margin: '16px 0',
+
   };
 
   const layoutContentStyle = {

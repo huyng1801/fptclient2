@@ -18,7 +18,7 @@ function FooterLink({ href, children }) {
       <a
         href={href}
         style={linkStyle}
-        onMouseOver={(e) => e.target.style.color = '#FFB400'}
+        onMouseOver={(e) => e.target.style.color = '#f05123'}
         onMouseOut={(e) => e.target.style.color = '#fff'}
       >
         {children}

@@ -5,7 +5,7 @@ const PageTitle = ({ title }) => (
     fontWeight: 'bold',
     fontSize: '18px',
     textTransform: 'capitalize',
-    color: '#FFB400'
+    color: '#f05123'
   }}>
     {title}
   </div>

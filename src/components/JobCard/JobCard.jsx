@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Typography, Tag, Space, Button, Tooltip } from 'antd';
+import { Card, Typography, Tag, Space, Button, Tooltip, Avatar } from 'antd';
 import {
   EnvironmentOutlined,
   ProfileOutlined,
@@ -7,9 +7,11 @@ import {
   DollarCircleOutlined,
   SafetyOutlined,
   TeamOutlined,
+  UserOutlined,
   ClockCircleOutlined,
   ArrowRightOutlined,
 } from '@ant-design/icons';
+import { format } from 'date-fns';
 import UserService from '../../services/UserService';
 
 const { Text, Paragraph, Title } = Typography;
@@ -142,14 +144,25 @@ function JobCard({ job, onClick }) {
           {job.jobTitle}
         </Title>
         <div style={styles.companyInfo}>
-          <TeamOutlined /> 
-          {loading ? (
-            "Đang tải..."
-          ) : creator ? (
-            `${creator.firstName} ${creator.lastName}`
-          ) : (
-            "Không có thông tin"
-          )}
+        <div className="flex items-center gap-3 mb-4">
+        <Avatar 
+          size={48} 
+          icon={<UserOutlined />}
+          src={creator?.profilePicture}
+        >
+          {creator?.firstName?.charAt(0)}
+        </Avatar>
+        <div className="flex-1">
+          <Text strong>
+           Người đăng: {creator ? `${creator.firstName} ${creator.lastName}` : "Đang tải..."}
+          </Text>
+          <br />
+          <Text type="secondary" className="text-sm">
+          Ngày đăng: {format(new Date(job.createdAt), 'dd/MM/yyyy')}
+          </Text>
+        </div>
+      
+      </div>
         </div>
       </div>
 

@@ -6,6 +6,9 @@ import UserService from '../../services/UserService';
 
 const { Title, Text } = Typography;
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+
 function ProfilePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,37 +33,68 @@ function ProfilePage() {
     fetchUserProfile();
   }, []);
 
+  const handleFileSelect = async (file) => {
+    try {
+      // Validate file type
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        message.error('Chỉ chấp nhận file JPG, PNG hoặc GIF');
+        return false;
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        message.error('Kích thước file không được vượt quá 5MB');
+        return false;
+      }
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        form.setFieldsValue({ profilePicture: reader.result });
+      };
+      reader.onerror = () => {
+        message.error('Lỗi khi đọc file');
+      };
+
+      return false; // Prevent upload
+    } catch (error) {
+      message.error('Có lỗi xảy ra khi xử lý file');
+      return false;
+    }
+  };
+
   const handleUpdateProfile = async (values) => {
     try {
-      await UserService.updateUser(userInfo.userId, {
+      const updatedData = {
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
-        isMentor: user.isMentor // Preserve existing mentor status
-      });
+        isMentor: user.isMentor,
+        profilePicture: values.profilePicture || user.profilePicture
+      };
+  
+      await UserService.updateUserInfo(userInfo.userId, updatedData);
+      
+      // Get fresh user data after update
+      const updatedUserData = await UserService.getUser(userInfo.userId);
+      
+      // Update session storage with new user data
+      sessionStorage.setItem('userInfo', JSON.stringify(updatedUserData));
       
       message.success('Cập nhật thông tin thành công');
       setEditModalVisible(false);
-      fetchUserProfile(); // Refresh user data
+      fetchUserProfile();
     } catch (error) {
       message.error('Không thể cập nhật thông tin');
     }
   };
-
-  const getBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-  };
-
   const handleEditClick = () => {
     form.setFieldsValue({
       firstName: user.firstName,
       lastName: user.lastName,
-      email: user.email
+      email: user.email,
+      profilePicture: user.profilePicture
     });
     setEditModalVisible(true);
   };
@@ -106,7 +140,7 @@ function ProfilePage() {
             </div>
             <div>
               <Text strong>Chuyên ngành:</Text>
-              <div>{user?.majorId ? `ID: ${user.majorId}` : 'Chưa cập nhật'}</div>
+              <div>{user?.majorName ? `${user.majorName}` : 'Chưa cập nhật'}</div>
             </div>
             <div>
               <Text strong>Vai trò:</Text>
@@ -133,25 +167,31 @@ function ProfilePage() {
             form={form}
             layout="vertical"
             onFinish={handleUpdateProfile}
+            initialValues={{
+              firstName: user?.firstName,
+              lastName: user?.lastName,
+              email: user?.email,
+              profilePicture: user?.profilePicture
+            }}
           >
             <Form.Item
               name="profilePicture"
               label="Ảnh đại diện"
             >
               <Upload
+                accept=".jpg,.jpeg,.png,.gif"
                 maxCount={1}
-                beforeUpload={async (file) => {
-                  try {
-                    const base64 = await getBase64(file);
-                    form.setFieldsValue({ profilePicture: base64 });
-                  } catch (error) {
-                    message.error('Không thể tải ảnh lên');
-                  }
-                  return false;
-                }}
                 showUploadList={false}
+                beforeUpload={handleFileSelect}
               >
-                <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
+                <div style={{ marginBottom: '10px' }}>
+                  <Avatar 
+                    size={100}
+                    src={form.getFieldValue('profilePicture')}
+                    icon={<UserOutlined />}
+                  />
+                </div>
+                <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
               </Upload>
             </Form.Item>
 

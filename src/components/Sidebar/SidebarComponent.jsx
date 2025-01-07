@@ -34,6 +34,11 @@ const menuStyle = {
 };
 
 const SidebarComponent = ({ collapsed, setCollapsed }) => {
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
+  const isRecruiter = userInfo?.roleName === 'Recruiter';
+  const isStudent = userInfo?.roleName === 'Student';
+  const isAlumni = userInfo?.roleName === 'Alumni';
+
   return (
     <Sider
       collapsible
@@ -57,14 +62,8 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
           <MenuItem icon={<FileTextOutlined />} path="/list-post" itemKey="2">
             Bài viết
           </MenuItem>
-          <MenuItem icon={<FileTextOutlined />} path="/my-post" itemKey="2">
-            Bài viết của tôi
-          </MenuItem>
           <MenuItem icon={<CalendarOutlined />} path="/list-event" itemKey="3">
             Sự kiện
-          </MenuItem>
-          <MenuItem icon={<CalendarOutlined />} path="/my-event" itemKey="3">
-            Sự kiện của tôi
           </MenuItem>
         </MenuSection>
 
@@ -81,15 +80,25 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
           <MenuItem icon={<FileDoneOutlined />} path="/rating" itemKey="7">
             Đánh giá mentor
           </MenuItem>
+          <MenuItem icon={<DashboardOutlined />} path="/alumni" itemKey="8">
+            Cựu sinh viên
+          </MenuItem>
         </MenuSection>
 
         <MenuSection title="Công việc">
-          <MenuItem icon={<FileTextOutlined />} path="/user-job-post" itemKey="8">
+          <MenuItem icon={<FileTextOutlined />} path="/user-job-post" itemKey="9">
             Công việc
           </MenuItem>
-          <MenuItem icon={<ProfileOutlined />} path="/cv" itemKey="9">
-            CV của tôi
-          </MenuItem>
+          {isRecruiter && (
+            <MenuItem icon={<FileTextOutlined />} path="/my-job-post" itemKey="10">
+              Công việc của tôi
+            </MenuItem>
+          )}
+          {(isStudent || isAlumni || true) && (
+            <MenuItem icon={<ProfileOutlined />} path="/cv" itemKey="11">
+              CV của tôi
+            </MenuItem>
+          )}
         </MenuSection>
       </Menu>
     </Sider>

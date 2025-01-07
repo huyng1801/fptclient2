@@ -189,7 +189,7 @@ function PostDetailsPage() {
               <Avatar 
                 size={64} 
                 icon={<UserOutlined />}
-                src={author?.avatarUrl}
+                src={author?.profilePicture}
               >
                 {author?.firstName?.charAt(0)}
               </Avatar>

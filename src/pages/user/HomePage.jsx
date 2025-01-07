@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Typography, Input, Card, Avatar, Tag, Button, Space } from 'antd';
-import { SearchOutlined, UserOutlined, CalendarOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { Row, Col, Typography, Input, Card, Avatar, Tag, Button, Space, message } from 'antd';
+import { SearchOutlined, UserOutlined, CalendarOutlined, EnvironmentOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import UserLayout from '../../layouts/UserLayout';
 import PostService from '../../services/PostService';
 import EventService from '../../services/EventService';
 import JobPostService from '../../services/JobPostService';
 import UserService from '../../services/UserService';
 import EmailVerificationStatus from '../../components/EmailVerificationStatus/EmailVerificationStatus';
-
 const { Title, Text, Paragraph } = Typography;
-
 const styles = {
   container: {
     maxWidth: '1200px',
@@ -89,14 +88,16 @@ function HomePage() {
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
-
+  const [outstandingAlumni, setOutstandingAlumni] = useState([]);
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [postsData, eventsData, jobsData] = await Promise.all([
+        const [postsData, eventsData, jobsData, usersData] = await Promise.all([
           PostService.getAllPosts(),
           EventService.getAllEvents(),
           JobPostService.getAllJobPosts(),
+          UserService.getAllUsers(),
         ]);
         const storedUserInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
         if (storedUserInfo.userId) {
@@ -110,13 +111,57 @@ function HomePage() {
         setFilteredPosts(postsData.items);
         setFilteredEvents(eventsData.items);
         setFilteredJobs(jobsData.items);
+        setOutstandingAlumni(usersData.items);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
     fetchData();
   }, []);
+  const checkAuth = () => {
+    const userInfo = sessionStorage.getItem('userInfo');
+    if (!userInfo) {
+      message.warning('Vui lòng đăng nhập để xem chi tiết');
+      navigate('/login');
+      return false;
+    }
+    return true;
+  };
+  const handleViewPost = (postId) => {
+    if (checkAuth()) {
+      navigate(`/post/${postId}`);
+    }
+  };
 
+  const handleViewEvent = (eventId) => {
+    if (checkAuth()) {
+      navigate(`/event/${eventId}`);
+    }
+  };
+
+  const handleViewJob = (jobId) => {
+    if (checkAuth()) {
+      navigate(`/job/${jobId}`);
+    }
+  };
+
+  const handleViewAllPosts = () => {
+    if (checkAuth()) {
+      navigate('/list-post');
+    }
+  };
+
+  const handleViewAllEvents = () => {
+    if (checkAuth()) {
+      navigate('/list-event');
+    }
+  };
+
+  const handleViewAllJobs = () => {
+    if (checkAuth()) {
+      navigate('/user-job-post');
+    }
+  };
   useEffect(() => {
     const lowerCaseQuery = searchQuery.toLowerCase();
 
@@ -177,14 +222,30 @@ function HomePage() {
         <div style={styles.leaderboardSection}>
           <Title level={3}>Cựu sinh viên xuất sắc</Title>
           <Row gutter={24}>
-            {[1, 2, 3].map((item) => (
-              <Col span={8} key={item}>
-                <Card style={{ textAlign: 'center' }}>
-                  <Avatar size={80} icon={<UserOutlined />} />
-                  <Title level={4} style={{ marginTop: '16px' }}>Tên Cựu Sinh Viên</Title>
-                  <Text type="secondary">Chức vụ</Text>
-                  <br />
-                  <Text type="secondary">Công ty</Text>
+            {outstandingAlumni.slice(0,3).map((alumni) => (
+              <Col span={8} key={alumni.userId}>
+                <Card 
+                  hoverable
+                  style={{ textAlign: 'center' }}
+                  onClick={() => navigate(`/user/${alumni.userId}`)}
+                >
+                  <Avatar 
+                    size={80} 
+                    icon={<UserOutlined />}
+                    src={alumni.profilePicture}
+                    style={{ 
+                      border: '2px solid #1890ff',
+                      marginBottom: '16px'
+                    }}
+                  />
+                  <Title level={4} style={{ marginBottom: '8px' }}>
+                    {`${alumni.firstName} ${alumni.lastName}`}
+                  </Title>
+                  {alumni.majorName && (
+                    <Tag color="blue" style={{ marginTop: '8px' }}>
+                      {alumni.majorName}
+                    </Tag>
+                  )}
                 </Card>
               </Col>
             ))}
@@ -199,13 +260,22 @@ function HomePage() {
                 <Card key={event.eventId} style={styles.eventCard}>
                   <Title level={4}>{event.title}</Title>
                   <Space>
-                    <CalendarOutlined /> {new Date(event.time).toLocaleDateString()}
+                    <CalendarOutlined /> {new Date(event.startDate).toLocaleDateString()}
                     <EnvironmentOutlined /> {event.location}
                   </Space>
                   <Paragraph ellipsis={{ rows: 2 }}>{event.description}</Paragraph>
+                  <Button 
+                    type="default" 
+                    icon={<ArrowRightOutlined />}
+                    onClick={() => handleViewEvent(event.eventId)}
+                  >
+                    Xem chi tiết
+                  </Button>
                 </Card>
               ))}
-              <Button type="primary">Xem tất cả sự kiện</Button>
+              <Button type="primary" onClick={handleViewAllEvents}>
+                Xem tất cả sự kiện
+              </Button>
             </div>
 
             <div style={styles.section}>
@@ -216,9 +286,18 @@ function HomePage() {
                   <Tag color="blue">{job.location}</Tag>
                   <Tag color="green">{`${job.minSalary} - ${job.maxSalary} USD`}</Tag>
                   <Paragraph ellipsis={{ rows: 2 }}>{job.jobDescription}</Paragraph>
+                  <Button 
+                    type="default" 
+                    icon={<ArrowRightOutlined />}
+                    onClick={() => handleViewJob(job.jobPostId)}
+                  >
+                    Xem chi tiết
+                  </Button>
                 </Card>
               ))}
-              <Button type="primary">Xem tất cả công việc</Button>
+              <Button type="primary" onClick={handleViewAllJobs}>
+                Xem tất cả công việc
+              </Button>
             </div>
           </Col>
 
@@ -229,13 +308,21 @@ function HomePage() {
                 <Card key={post.postId} style={{ marginBottom: '16px' }}>
                   <Title level={4}>{post.title}</Title>
                   <Paragraph ellipsis={{ rows: 2 }}>{post.content}</Paragraph>
+                  <Button 
+                    type="default" 
+                    icon={<ArrowRightOutlined />}
+                    onClick={() => handleViewPost(post.postId)}
+                  >
+                    Xem chi tiết
+                  </Button>
                 </Card>
               ))}
-              <Button type="primary">Xem tất cả bài viết</Button>
+              <Button type="primary" onClick={handleViewAllPosts}>
+                Xem tất cả bài viết
+              </Button>
             </div>
           </Col>
         </Row>
-
         <div style={styles.networkSection}>
           <Card style={styles.networkCard}>
             <Title level={3}>Kết nối với cựu sinh viên</Title>

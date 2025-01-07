@@ -7,7 +7,7 @@ const { Title } = Typography;
 function LinkSection({ title, links }) {
   return (
     <Col md={8} sm={24}>
-      <Title level={4} style={{ color: "#FFB400", marginBottom: '20px' }}>
+      <Title level={4} style={{ color: "#f05123", marginBottom: '20px' }}>
         {title}
       </Title>
       {links.map((link, index) => (

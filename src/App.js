@@ -26,13 +26,16 @@ import ListEventPage from "./pages/user/ListEventPage";
 import EventDetailsPage from "./pages/user/EventDetailsPage";
 import PostDetailsPage from "./pages/user/PostDetailsPage";
 import MentorDashboardPage from "./pages/user/MentorDashboard";
+import AlumniPage from "./pages/user/AlumniPage";
+import MentorDetailsPage from "./pages/user/MentorDetailsPage";
 import MentorRequestListPage from "./pages/user/MentorRequestListPage";
 import RequestDetailPage from "./pages/user/RequestDetailPage";
 import SchedulePage from "./pages/user/SchedulePage";
 import MentorRatingPage from "./pages/user/MentorRatingPage";
-import MyListPostPage from "./pages/user/MyListPostPage";
 import MyEventPage from "./pages/user/MyEventPage";
 import ProfilePage from "./pages/user/ProfilePage";
+import MyJobPostPage from "./pages/user/MyJobPostPage";
+import UserJobApplicationPage from "./pages/user/UserJobApplicationPage";
 
 function App() {
   return (
@@ -43,11 +46,12 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/list-post" element={<ListPostPage />} />
-        <Route path="/my-post" element={<MyListPostPage />} />
         <Route path="/list-event" element={<ListEventPage />} />
         <Route path="/my-event" element={<MyEventPage />} />
         <Route path="/post/:postId" element={<PostDetailsPage />} />
         <Route path="/mentor-dashboard" element={<MentorDashboardPage />} />
+        <Route path="/alumni" element={<AlumniPage />} />
+        <Route path="/user/:id" element={<MentorDetailsPage />} />
         <Route path="/mentor-requests" element={<MentorRequestListPage />} />
         <Route path="/request/:id" element={<RequestDetailPage />} />
         <Route path="/schedule" element={<SchedulePage />} />
@@ -59,6 +63,9 @@ function App() {
         <Route path="/create-event" element={<CreateEventPage />} />
         <Route path="/user-job-post/:id" element={<UserJobPostDetailsPage />} />
         <Route path="/create-job-post" element={<CreateJobPostPage />} />
+        <Route path="/my-job-post" element={<MyJobPostPage />} />
+        <Route path="/job-applications/:jobId" element={<UserJobApplicationPage />} />
+
         <Route path="/cv" element={<CVPage />} />
         <Route path="/admin/dashboard" element={<DashboardPage />} />
         <Route path="/admin/user" element={<UserPage />} />

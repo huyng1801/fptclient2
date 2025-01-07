@@ -19,14 +19,14 @@ const contactItemStyle = {
 };
 
 const iconStyle = {
-  color: '#FFB400',
+  color: '#f05123',
   fontSize: '16px'
 };
 
 function ContactInfo() {
   return (
     <Col md={8} sm={24}>
-      <Title level={4} style={{ color: "#FFB400", marginBottom: '20px' }}>
+      <Title level={4} style={{ color: "#f05123", marginBottom: '20px' }}>
         Thông tin người liên hệ
       </Title>
       <div style={contactInfoStyle}>

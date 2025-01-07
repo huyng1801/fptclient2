@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, Typography, Tag, Avatar, Space, Tooltip, Modal, Button, message } from "antd";
 import { 
   EyeOutlined, 
@@ -12,17 +12,33 @@ import {
 } from "@ant-design/icons";
 import { format } from 'date-fns';
 import PostService from "../../services/PostService";
+import UserService from "../../services/UserService";
 
 const { Title, Text, Paragraph } = Typography;
 const { confirm } = Modal;
 
 export const PostCard = ({ item, onClick, onPostDeleted, onEdit }) => {
-  const [user, setUser] = useState(null);
+  const [author, setAuthor] = useState(null);
   const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
   const isAuthor = userInfo?.userId === item.authorId;
 
+  useEffect(() => {
+    const fetchAuthor = async () => {
+      try {
+        if (item.authorId) {
+          const authorData = await UserService.getUser(item.authorId);
+          setAuthor(authorData);
+        }
+      } catch (error) {
+        console.error('Error fetching author:', error);
+      }
+    };
+
+    fetchAuthor();
+  }, [item.authorId]);
+
   const handleDelete = async (e) => {
-    e.preventDefault();
+    e.stopPropagation();
     confirm({
       title: 'Xác nhận xóa bài viết',
       content: 'Bạn có chắc chắn muốn xóa bài viết này không?',
@@ -54,38 +70,20 @@ export const PostCard = ({ item, onClick, onPostDeleted, onEdit }) => {
         <Avatar 
           size={48} 
           icon={<UserOutlined />}
-          src={user?.avatarUrl}
+          src={author?.profilePicture}
         >
-          {user?.firstName?.charAt(0)}
+          {author?.firstName?.charAt(0)}
         </Avatar>
         <div className="flex-1">
           <Text strong>
-            {user ? `${user.firstName} ${user.lastName}` : "Loading..."}
+            {author ? `${author.firstName} ${author.lastName}` : "Đang tải..."}
           </Text>
           <br />
           <Text type="secondary" className="text-sm">
-            {format(new Date(item.createdAt), 'dd MMM yyyy, HH:mm')}
+          {format(new Date(item.createdAt), 'dd/MM/yyyy')}
           </Text>
         </div>
-        {isAuthor && (
-          <Space>
-            <Button
-              icon={<EditOutlined />}
-              className="flex items-center gap-1 text-blue-500 bg-blue-50"
-              onClick={(e) => onEdit(item, e)}
-            >
-              Sửa
-            </Button>
-            <Button
-              icon={<DeleteOutlined />}
-              className="flex items-center gap-1 text-red-500 bg-red-50"
-              onClick={handleDelete}
-              danger
-            >
-              Xóa
-            </Button>
-          </Space>
-        )}
+      
       </div>
 
       <Title level={4} className="mb-3 line-clamp-2">
@@ -108,8 +106,29 @@ export const PostCard = ({ item, onClick, onPostDeleted, onEdit }) => {
             {item.isPrivate ? <LockOutlined /> : <UnlockOutlined />}
           </Tag>
         </Tooltip>
+        
       </Space>
 
+      {isAuthor && (
+          <Space>
+            <Button
+              icon={<EditOutlined />}
+              className="flex items-center gap-1 text-blue-500 bg-blue-50"
+              onClick={(e) => onEdit(item, e)}
+            >
+              Sửa
+            </Button>
+            {/* <Button
+              icon={<DeleteOutlined />}
+              className="flex items-center gap-1 text-red-500 bg-red-50"
+              onClick={handleDelete}
+              danger
+            >
+              Xóa
+            </Button> */}
+          </Space>
+        )}
+{/* 
       <div className="border-t border-gray-100 pt-4 mt-4">
         <Space className="justify-between w-full">
           <Tooltip title="Views">
@@ -125,7 +144,7 @@ export const PostCard = ({ item, onClick, onPostDeleted, onEdit }) => {
             </span>
           </Tooltip>
         </Space>
-      </div>
+      </div> */}
     </Card>
   );
 };

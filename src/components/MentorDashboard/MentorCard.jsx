@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Row, Col, Typography, Avatar, Tag } from 'antd';
-import { StarOutlined, UserOutlined } from '@ant-design/icons';
+import { StarOutlined, UserOutlined, MailOutlined } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
 
@@ -31,37 +31,27 @@ const styles = {
   infoContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '12px',
   },
   name: {
-    fontSize: '20px',
+    fontSize: '24px',
     fontWeight: '600',
     color: '#1890ff',
     marginBottom: '4px',
   },
-  role: {
+  email: {
     fontSize: '14px',
     color: '#666',
-    marginBottom: '4px',
-  },
-  major: {
-    fontSize: '14px',
-    color: '#666',
-  },
-  ratingContainer: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    marginTop: '8px',
   },
-  ratingIcon: {
-    color: '#faad14',
-    fontSize: '18px',
-  },
-  ratingText: {
-    fontSize: '16px',
-    fontWeight: '500',
-    color: '#333',
+  infoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#666',
+    fontSize: '14px',
   },
   tags: {
     marginTop: '12px',
@@ -85,7 +75,7 @@ const MentorCard = ({ mentor, onClick }) => {
             <Avatar
               size={120}
               icon={<UserOutlined />}
-              src={mentor.profilePicture || "/assets/images/default-avatar.png"}
+              src={mentor.profilePicture}
               style={styles.avatar}
             />
           </div>
@@ -93,23 +83,26 @@ const MentorCard = ({ mentor, onClick }) => {
 
         <Col xs={24} sm={16}>
           <div style={styles.infoContainer}>
-            <Title level={4} style={styles.name}>
+            <Title level={3} style={styles.name}>
               {`${mentor.firstName} ${mentor.lastName}`}
             </Title>
-            <Text style={styles.role}>Role ID: {mentor.roleId}</Text>
-            <Text style={styles.major}>Major ID: {mentor.majorId || 'Not specified'}</Text>
+
+            <Text style={styles.email}>
+              <MailOutlined /> {mentor.email}
+              {mentor.emailVerified && (
+                <Tag color="success" style={{ marginLeft: '8px' }}>Verified</Tag>
+              )}
+            </Text>
 
             <div style={styles.tags}>
-              <Tag color="blue">Mentor</Tag>
-              <Tag color="green">Active</Tag>
-              {mentor.rating >= 4.5 && (
-                <Tag color="gold">Top Rated</Tag>
-              )}
+              <Tag color="blue">{mentor.roleName || 'Role not specified'}</Tag>
+              {mentor.isMentor && <Tag color="purple">Mentor</Tag>}
             </div>
 
-            <div style={styles.ratingContainer}>
-              <StarOutlined style={styles.ratingIcon} />
-              <Text style={styles.ratingText}>{mentor.rating || '4.9'}</Text>
+            <div style={styles.infoRow}>
+              <StarOutlined style={{ color: '#faad14' }} />
+              <Text strong>4.9</Text>
+              <Text type="secondary">(Rating)</Text>
             </div>
           </div>
         </Col>

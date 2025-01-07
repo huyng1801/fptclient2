@@ -36,7 +36,6 @@ const styles = {
 const UserMenu = () => {
   const navigate = useNavigate();
   const userInfoString = sessionStorage.getItem('userInfo');
-  console.log(userInfoString);
   const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
   const isLoggedIn = !!userInfo;
 
@@ -70,12 +69,12 @@ const UserMenu = () => {
         </div>
       </Menu.Item>
       
-      <Menu.Item key="change-password" onClick={() => handleMenuClick('/change-password')}>
+      {/* <Menu.Item key="change-password" onClick={() => handleMenuClick('/change-password')}>
         <div style={styles.menuItem}>
           <LockOutlined style={styles.icon} />
           Đổi mật khẩu
         </div>
-      </Menu.Item>
+      </Menu.Item> */}
       
       <Menu.Divider />
       

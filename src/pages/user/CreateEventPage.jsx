@@ -1,35 +1,32 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, DatePicker, notification, Upload } from 'antd';
-import UserLayout from '../../layouts/UserLayout'; // Adjust the import path as needed
-import EventService from '../../services/EventService'; // Assuming EventService is imported from this path
 import { UploadOutlined } from '@ant-design/icons';
+import UserLayout from '../../layouts/UserLayout';
+import EventService from '../../services/EventService';
 
 const CreateEventPage = () => {
   const [loading, setLoading] = useState(false);
-  const [imageBase64, setImageBase64] = useState(null); // State to store the base64 image
-  const [imagePreview, setImagePreview] = useState(null); // State to store image preview
+  const [imageBase64, setImageBase64] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
-  // Handle image upload
   const handleImageUpload = (file) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      setImageBase64(reader.result); // Save the Base64 string in state
-      setImagePreview(reader.result); // Set the image preview
+      setImageBase64(reader.result);
+      setImagePreview(reader.result);
     };
     if (file) {
-      reader.readAsDataURL(file); // Convert the image to Base64
+      reader.readAsDataURL(file);
     }
-    return false; // Prevent Ant Design from auto uploading
+    return false;
   };
 
   const handleSubmit = async (values) => {
     setLoading(true);
 
-    // Retrieve OrganizerId from sessionStorage
     const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
     const organizerId = userInfo ? userInfo.userId : null;
 
-    // Validate that organizerId exists
     if (!organizerId) {
       notification.error({
         message: 'Lỗi Tạo Sự Kiện',
@@ -39,7 +36,6 @@ const CreateEventPage = () => {
       return;
     }
 
-    // Validate that all fields are provided
     if (!values.eventName || !values.description || !values.startDate || !values.endDate || !values.location || !imageBase64) {
       notification.error({
         message: 'Lỗi Tạo Sự Kiện',
@@ -49,8 +45,7 @@ const CreateEventPage = () => {
       return;
     }
 
-    // Validate that startDate is not in the past
-    const startDate = new Date(values.startDate);
+    const startDate = values.startDate.toDate();
     if (startDate < new Date()) {
       notification.error({
         message: 'Lỗi Tạo Sự Kiện',
@@ -60,8 +55,7 @@ const CreateEventPage = () => {
       return;
     }
 
-    // Validate that endDate is not earlier than startDate
-    const endDate = new Date(values.endDate);
+    const endDate = values.endDate.toDate();
     if (endDate < startDate) {
       notification.error({
         message: 'Lỗi Tạo Sự Kiện',
@@ -71,27 +65,22 @@ const CreateEventPage = () => {
       return;
     }
 
-    // Prepare event data
     const eventData = {
       eventName: values.eventName,
       description: values.description,
-      startDate: startDate.toISOString(), // Convert to ISO string for storage
-      endDate: endDate.toISOString(), // Convert to ISO string for storage
+      startDate: values.startDate.format('YYYY-MM-DD'),
+      endDate: values.endDate.format('YYYY-MM-DD'),
       organizerId: organizerId,
       location: values.location,
       img: imageBase64,
     };
-
+console.log(eventData);
     try {
-      // Call the EventService to create the event
-      const response = await EventService.createEvent(eventData);
-
+      await EventService.createEvent(eventData);
       notification.success({
         message: 'Sự Kiện Đã Tạo',
         description: 'Sự kiện của bạn đã được tạo thành công.',
       });
-
-      // Optionally, you can redirect or reset the form here
       setLoading(false);
     } catch (error) {
       console.error('Error creating event:', error);
@@ -109,7 +98,6 @@ const CreateEventPage = () => {
         <h2>Tạo Sự Kiện Mới</h2>
 
         <Form layout="vertical" onFinish={handleSubmit}>
-          {/* Event Name */}
           <Form.Item
             label="Tên Sự Kiện"
             name="eventName"
@@ -118,7 +106,6 @@ const CreateEventPage = () => {
             <Input placeholder="Tên Sự Kiện" />
           </Form.Item>
 
-          {/* Event Description */}
           <Form.Item
             label="Mô Tả"
             name="description"
@@ -127,33 +114,30 @@ const CreateEventPage = () => {
             <Input.TextArea placeholder="Mô Tả" rows={4} />
           </Form.Item>
 
-          {/* Start Date */}
           <Form.Item
             label="Ngày Bắt Đầu"
             name="startDate"
             rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu!' }]}
           >
             <DatePicker
+       
               format="YYYY-MM-DD"
               style={{ width: '100%' }}
-              defaultValue={new Date()} // Ensure it shows the current date by default
             />
           </Form.Item>
 
-          {/* End Date */}
           <Form.Item
             label="Ngày Kết Thúc"
             name="endDate"
             rules={[{ required: true, message: 'Vui lòng chọn ngày kết thúc!' }]}
           >
             <DatePicker
+   
               format="YYYY-MM-DD"
               style={{ width: '100%' }}
-              defaultValue={new Date()} // Ensure it shows the current date by default
             />
           </Form.Item>
 
-          {/* Location */}
           <Form.Item
             label="Địa Điểm"
             name="location"
@@ -162,7 +146,6 @@ const CreateEventPage = () => {
             <Input placeholder="Địa Điểm" />
           </Form.Item>
 
-          {/* Event Image */}
           <Form.Item label="Hình Ảnh" name="img">
             <Upload
               beforeUpload={handleImageUpload}
@@ -177,7 +160,6 @@ const CreateEventPage = () => {
             )}
           </Form.Item>
 
-          {/* Submit Button */}
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} style={{ width: '100%' }}>
               Tạo Sự Kiện
