@@ -122,16 +122,16 @@ function EventDetailsPage() {
           EventService.getEventById(id),
           UserJoinEventService.viewAllUserJoinEvents({ eventId: id })
         ]);
-
+  
         setEventDetails(event);
         setParticipants(participantsResponse.items);
-
+  
         // Fetch organizer details
         if (event.organizerId) {
           const organizer = await UserService.getUser(event.organizerId);
           setOrganizerDetails(organizer);
         }
-      
+        
         // Fetch participant details
         const participantDetailsPromises = participantsResponse.items.map(async (participant) => {
           try {
@@ -142,14 +142,14 @@ function EventDetailsPage() {
             return { userId: participant.userId, details: null };
           }
         });
-
+  
         const participantDetailsResults = await Promise.all(participantDetailsPromises);
         const participantDetailsMap = {};
         participantDetailsResults.forEach(({ userId, details }) => {
           participantDetailsMap[userId] = details;
         });
         setParticipantDetails(participantDetailsMap);
-
+  
         // Check if current user has joined
         if (userInfo?.userId) {
           const userJoinResponse = await UserJoinEventService.viewAllUserJoinEvents({
@@ -178,7 +178,7 @@ function EventDetailsPage() {
         if (moment(currentDate).isAfter(ratingDeadline)) {
           setCanRate(false);
         }
- 
+  
       } catch (error) {
         console.error("Error fetching event data:", error);
         // message.error("Không thể tải thông tin sự kiện");
@@ -186,16 +186,16 @@ function EventDetailsPage() {
         setLoading(false);
       }
     };
-
+  
     fetchEventData();
-  }, [id, userInfo?.userId]);
-
+  }, [id, userInfo?.userId, userJoinEvent?.rating]);
+  
   const handleJoinEvent = async () => {
     if (!userInfo?.userId) {
       message.error("Vui lòng đăng nhập để tham gia sự kiện");
       return;
     }
-
+  
     try {
       setJoining(true);
       const response = await UserJoinEventService.createUserJoinEvent({
@@ -204,7 +204,8 @@ function EventDetailsPage() {
       });
       
       message.success("Đăng ký tham gia sự kiện thành công!");
-      setUserJoinEvent(response);
+      setUserJoinEvent(response);  // Update state with the response
+      window.location.reload();
     } catch (error) {
       console.error("Error joining event:", error);
       message.error("Không thể đăng ký tham gia sự kiện");
@@ -212,7 +213,7 @@ function EventDetailsPage() {
       setJoining(false);
     }
   };
-
+  
   const handleRatingSubmit = async (values) => {
     try {
       await UserJoinEventService.updateUserJoinEvent(userJoinEvent.id, {
@@ -221,12 +222,14 @@ function EventDetailsPage() {
       });
       
       message.success("Cập nhật đánh giá thành công!");
-      setUserJoinEvent(prev => ({ ...prev, ...values }));
+      setUserJoinEvent(prev => ({ ...prev, ...values }));  // Update state with new rating and content
+      window.location.reload();
     } catch (error) {
       console.error("Error updating rating:", error);
       message.error("Không thể cập nhật đánh giá");
     }
   };
+  
 
   if (loading) {
     return (

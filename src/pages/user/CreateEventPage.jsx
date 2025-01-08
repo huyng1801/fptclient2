@@ -3,12 +3,12 @@ import { Form, Input, Button, DatePicker, notification, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import UserLayout from '../../layouts/UserLayout';
 import EventService from '../../services/EventService';
-
+import { useNavigate } from 'react-router-dom';
 const CreateEventPage = () => {
   const [loading, setLoading] = useState(false);
   const [imageBase64, setImageBase64] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-
+  const navigate = useNavigate();
   const handleImageUpload = (file) => {
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -74,7 +74,7 @@ const CreateEventPage = () => {
       location: values.location,
       img: imageBase64,
     };
-console.log(eventData);
+
     try {
       await EventService.createEvent(eventData);
       notification.success({
@@ -82,6 +82,7 @@ console.log(eventData);
         description: 'Sự kiện của bạn đã được tạo thành công.',
       });
       setLoading(false);
+      navigate('/my-event');
     } catch (error) {
       console.error('Error creating event:', error);
       notification.error({

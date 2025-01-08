@@ -1,42 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { 
   Typography, 
   Table, 
   Card, 
   Space, 
-  Tag, 
   Button, 
-  Select,
-  Input,
   Modal,
   Descriptions,
-  notification 
+  notification,
+  Tooltip,
+  Radio
 } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { StarOutlined } from '@ant-design/icons';
 import UserLayout from '../../layouts/UserLayout';
 import JobApplicationService from '../../services/JobApplicationService';
 import CVService from '../../services/CVService';
+import PhoBertService from '../../services/PhoBertService';
 
 const { Title } = Typography;
-const { Option } = Select;
 
 const UserJobApplicationPage = () => {
   const { jobId } = useParams();
-  const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedCV, setSelectedCV] = useState(null);
   const [cvModalVisible, setCvModalVisible] = useState(false);
+  const [bestMatchCVs, setBestMatchCVs] = useState([]);
+  const [findingBestMatch, setFindingBestMatch] = useState(false);
+  const [viewMode, setViewMode] = useState('ALL');
 
   useEffect(() => {
-    fetchApplications();
-  }, [jobId]);
+    if (viewMode === 'ALL') {
+      fetchApplications();
+    } else {
+      findBestMatchingCV();
+    }
+  }, [jobId, viewMode]);
 
   const fetchApplications = async () => {
     try {
+      setLoading(true);
       const response = await JobApplicationService.viewAllJobApplications({ jobPostId: jobId });
       const applicationsWithCV = await Promise.all(
         response.data.items.map(async (app) => {
@@ -44,7 +48,6 @@ const UserJobApplicationPage = () => {
             const cvResponse = await CVService.getCVById(app.cvid);
             return { ...app, cv: cvResponse.data };
           } catch (error) {
-            console.error(`Error fetching CV ${app.cvid}:`, error);
             return { ...app, cv: null };
           }
         })
@@ -60,6 +63,26 @@ const UserJobApplicationPage = () => {
     }
   };
 
+  const findBestMatchingCV = async () => {
+    try {
+      setLoading(true);
+      setFindingBestMatch(true);
+      const bestMatches = await PhoBertService.findBestMatchingCV(jobId);
+      console.log(bestMatchCVs);
+      setBestMatchCVs(bestMatches);
+      setApplications(bestMatches.map(cv => ({ cv })));
+    } catch (error) {
+      console.error('Error finding best matching CV:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không thể tìm CV phù hợp',
+      });
+    } finally {
+      setLoading(false);
+      setFindingBestMatch(false);
+    }
+  };
+
   const handleViewCV = (cv) => {
     setSelectedCV(cv);
     setCvModalVisible(true);
@@ -70,46 +93,43 @@ const UserJobApplicationPage = () => {
       title: 'Họ và tên',
       dataIndex: ['cv', 'fullName'],
       key: 'fullName',
-      render: (text, record) => record.cv?.fullName || 'N/A',
+      render: (text, record) => (
+        <Space>
+          {record.cv?.fullName || 'N/A'}
+          {viewMode === 'BEST_MATCH' && (
+            <Tooltip title="CV phù hợp nhất">
+              <StarOutlined style={{ color: '#faad14' }} />
+            </Tooltip>
+          )}
+        </Space>
+      ),
+      sorter: (a, b) => (a.cv?.fullName || '').localeCompare(b.cv?.fullName || ''),
     },
     {
       title: 'Email',
       dataIndex: ['cv', 'email'],
       key: 'email',
-      render: (text, record) => record.cv?.email || 'N/A',
+      render: (_, record) => record.cv?.email || 'N/A',
     },
     {
       title: 'Số điện thoại',
       dataIndex: ['cv', 'phone'],
       key: 'phone',
-      render: (text, record) => record.cv?.phone || 'N/A',
+      render: (_, record) => record.cv?.phone || 'N/A',
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={
-          status === 'PENDING' ? 'gold' :
-          status === 'APPROVED' ? 'green' :
-          status === 'REJECTED' ? 'red' : 'default'
-        }>
-          {status}
-        </Tag>
+      title: 'Kinh nghiệm',
+      key: 'experience',
+      render: (_, record) => record.cv?.jobLevel || 'N/A',
+      sorter: (a, b) => (a.cv?.jobLevel || '').localeCompare(b.cv?.jobLevel || ''),
+    },
+    {
+      title: 'Mức lương mong muốn',
+      key: 'salary',
+      render: (_, record) => (
+        record.cv ? `$${record.cv.minSalary} - $${record.cv.maxSalary}` : 'N/A'
       ),
-    },
-    {
-      title: 'Thư xin việc',
-      dataIndex: 'letterCover',
-      key: 'letterCover',
-      render: (text) => text?.substring(0, 50) + (text?.length > 50 ? '...' : '') || 'N/A',
-    },
-    {
-      title: 'Ngày ứng tuyển',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date) => new Date(date).toLocaleDateString('vi-VN'),
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      sorter: (a, b) => (a.cv?.minSalary || 0) - (b.cv?.minSalary || 0),
     },
     {
       title: 'Thao tác',
@@ -129,15 +149,6 @@ const UserJobApplicationPage = () => {
     },
   ];
 
-  const filteredApplications = applications.filter(app => {
-    const matchesSearch = app.cv && (
-      app.cv.fullName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      app.cv.email?.toLowerCase().includes(searchText.toLowerCase())
-    );
-    const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
-    return (!searchText || matchesSearch) && matchesStatus;
-  });
-
   return (
     <UserLayout>
       <div style={{ padding: '24px' }}>
@@ -145,30 +156,27 @@ const UserJobApplicationPage = () => {
 
         <Card style={{ marginBottom: '24px' }}>
           <Space style={{ marginBottom: '16px' }}>
-            <Input
-              placeholder="Tìm kiếm theo tên hoặc email"
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{ width: 300 }}
-            />
-            <Select
-              value={statusFilter}
-              onChange={setStatusFilter}
-              style={{ width: 150 }}
+            <Radio.Group 
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value)}
+              optionType="button"
+              buttonStyle="solid"
             >
-              <Option value="ALL">Tất cả trạng thái</Option>
-              <Option value="PENDING">Đang chờ</Option>
-              <Option value="APPROVED">Đã duyệt</Option>
-              <Option value="REJECTED">Từ chối</Option>
-            </Select>
+              <Radio.Button value="ALL">CV Ứng tuyển</Radio.Button>
+              <Radio.Button value="BEST_MATCH">Ứng viên tìm năng</Radio.Button>
+            </Radio.Group>
           </Space>
 
           <Table
             columns={columns}
-            dataSource={filteredApplications}
-            rowKey="applicationId"
-            loading={loading}
+            dataSource={applications}
+            rowKey={(record) => record.cv?.id || record.applicationId}
+            loading={loading || findingBestMatch}
+            pagination={{
+              defaultPageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => `Tổng ${total} ứng viên`
+            }}
           />
         </Card>
 

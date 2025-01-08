@@ -55,51 +55,59 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
         style={menuStyle}
         defaultSelectedKeys={["1"]}
       >
-        <MenuSection>
-          <MenuItem icon={<HomeOutlined />} path="/" itemKey="1">
-            Trang chủ
-          </MenuItem>
-          <MenuItem icon={<FileTextOutlined />} path="/list-post" itemKey="2">
-            Bài viết
-          </MenuItem>
-          <MenuItem icon={<CalendarOutlined />} path="/list-event" itemKey="3">
-            Sự kiện
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection title="Mentor">
-          <MenuItem icon={<DashboardOutlined />} path="/mentor-dashboard" itemKey="4">
-            Người hướng dẫn
-          </MenuItem>
-          <MenuItem icon={<UsergroupAddOutlined />} path="/mentor-requests" itemKey="5">
-            Yêu cầu hướng dẫn
-          </MenuItem>
-          <MenuItem icon={<FormOutlined />} path="/schedule" itemKey="6">
-            Lịch trình
-          </MenuItem>
-          <MenuItem icon={<FileDoneOutlined />} path="/rating" itemKey="7">
-            Đánh giá mentor
-          </MenuItem>
-          <MenuItem icon={<DashboardOutlined />} path="/alumni" itemKey="8">
-            Cựu sinh viên
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection title="Công việc">
-          <MenuItem icon={<FileTextOutlined />} path="/user-job-post" itemKey="9">
-            Công việc
-          </MenuItem>
-          {isRecruiter && (
-            <MenuItem icon={<FileTextOutlined />} path="/my-job-post" itemKey="10">
+        {isRecruiter ? (
+          <MenuSection title="Công việc">
+            <MenuItem icon={<FileTextOutlined />} path="/user-job-post" itemKey="10">
+              Công việc
+            </MenuItem>
+            <MenuItem icon={<FileTextOutlined />} path="/my-job-post" itemKey="11">
               Công việc của tôi
             </MenuItem>
-          )}
-          {(isStudent || isAlumni || true) && (
-            <MenuItem icon={<ProfileOutlined />} path="/cv" itemKey="11">
-              CV của tôi
-            </MenuItem>
-          )}
-        </MenuSection>
+          </MenuSection>
+        ) : (
+          <>
+            <MenuSection>
+              <MenuItem icon={<HomeOutlined />} path="/" itemKey="1">
+                Trang chủ
+              </MenuItem>
+              <MenuItem icon={<FileTextOutlined />} path="/list-post" itemKey="2">
+                Bài viết
+              </MenuItem>
+              <MenuItem icon={<CalendarOutlined />} path="/list-event" itemKey="3">
+                Sự kiện
+              </MenuItem>
+              <MenuItem icon={<CalendarOutlined />} path="/my-event" itemKey="4">
+                Sự kiện của tôi
+              </MenuItem>
+            </MenuSection>
+
+            <MenuSection title="Mentor">
+              <MenuItem icon={<DashboardOutlined />} path="/mentor-dashboard" itemKey="5">
+                Người hướng dẫn
+              </MenuItem>
+              <MenuItem icon={<UsergroupAddOutlined />} path="/mentor-requests" itemKey="6">
+                Yêu cầu hướng dẫn
+              </MenuItem>
+              <MenuItem icon={<FormOutlined />} path="/schedule" itemKey="7">
+                Lịch trình
+              </MenuItem>
+              <MenuItem icon={<FileDoneOutlined />} path="/rating" itemKey="8">
+                Đánh giá mentor
+              </MenuItem>
+              <MenuItem icon={<DashboardOutlined />} path="/alumni" itemKey="9">
+                Cựu sinh viên
+              </MenuItem>
+            </MenuSection>
+
+            <MenuSection title="Công việc">
+              {(isStudent || isAlumni || true) && (
+                <MenuItem icon={<ProfileOutlined />} path="/cv" itemKey="12">
+                  CV của tôi
+                </MenuItem>
+              )}
+            </MenuSection>
+          </>
+        )}
       </Menu>
     </Sider>
   );

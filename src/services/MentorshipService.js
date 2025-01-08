@@ -1,68 +1,60 @@
-import axios from 'axios';
+import api from './ApiService';
 
-const BASE_URL = 'https://localhost:7168/api/v1';
-
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
-  }
-});
-
-class MentorshipService {
-  static async getMentorshipById(id) {
+const MentorshipService = {
+  getMentorshipById: async (id) => {
     try {
-      const response = await apiClient.get(`/mentorships/${id}`);
+      const response = await api.get(`/mentorships/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching mentorship:', error);
       throw error;
     }
-  }
+  },
 
-  static async getAllMentorships(filter = {}, pagingModel = { page: 1, pageSize: 10 }) {
+  getAllMentorships: async (filter = {}, pagingModel = { page: 1, size: 10 }) => {
     try {
-      const params = {
-        ...filter,
-        ...pagingModel
-      };
-      const response = await apiClient.get('/mentorships', { params });
+      const params = { ...filter, ...pagingModel };
+      const response = await api.get('/mentorships', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching mentorships:', error);
       throw error;
     }
-  }
+  },
 
-  static async createMentorship(mentorshipData) {
+  createMentorship: async (mentorshipData) => {
     try {
-      const response = await apiClient.post('/mentorships', mentorshipData);
+      const response = await api.post('/mentorships', {
+        alumniId: mentorshipData.alumniId,
+        requestMessage: mentorshipData.requestMessage,
+        type: mentorshipData.type || 'PENDING',
+        status: mentorshipData.status || 'ACTIVE'
+      });
       return response.data;
     } catch (error) {
       console.error('Error creating mentorship:', error);
       throw error;
     }
-  }
+  },
 
-  static async updateMentorship(id, mentorshipData) {
+  updateMentorship: async (id, mentorshipData) => {
     try {
-      const response = await apiClient.patch(`/mentorships/${id}`, mentorshipData);
+      const response = await api.patch(`/mentorships/${id}`, mentorshipData);
       return response.data;
     } catch (error) {
       console.error('Error updating mentorship:', error);
       throw error;
     }
-  }
+  },
 
-  static async deleteMentorship(id) {
+  deleteMentorship: async (id) => {
     try {
-      await apiClient.delete(`/mentorships/${id}`);
+      await api.delete(`/mentorships/${id}`);
     } catch (error) {
       console.error('Error deleting mentorship:', error);
       throw error;
     }
   }
-}
+};
 
 export default MentorshipService;

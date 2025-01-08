@@ -276,9 +276,7 @@ useEffect(() => {
             
               </div>
               </Descriptions.Item>
-              <Descriptions.Item label={<><TagOutlined /> Mã công việc</>}>
-                {jobPost.jobPostId}
-              </Descriptions.Item>
+
               <Descriptions.Item label="Cập nhật lần cuối">
                 {new Date(jobPost.updatedAt).toLocaleString()}
               </Descriptions.Item>

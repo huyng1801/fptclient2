@@ -1,6 +1,5 @@
 import React from 'react';
-import { Form, Input, DatePicker, Select, Col, Row, Button } from 'antd';
-import { format, parseISO } from 'date-fns';
+import { Form, Input, DatePicker, Select, Col, Row, Button, Card } from 'antd';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -8,10 +7,8 @@ const { Option } = Select;
 const CVForm = ({ onSubmit, loading, initialValues }) => {
   const [form] = Form.useForm();
 
-  // Set initial values when they exist
   React.useEffect(() => {
     if (initialValues) {
- 
       const formattedValues = {
         ...initialValues,
       };
@@ -37,6 +34,7 @@ const CVForm = ({ onSubmit, loading, initialValues }) => {
       }}
     >
       <Row gutter={24}>
+        {/* Personal Information */}
         <Col span={12}>
           <Form.Item
             label="Họ và tên"
@@ -111,61 +109,64 @@ const CVForm = ({ onSubmit, loading, initialValues }) => {
           </Form.Item>
         </Col>
 
-        <Col span={12}>
-          <Form.Item
-            label="Công ty"
-            name="company"
-            rules={[{ required: true, message: 'Vui lòng nhập tên công ty!' }]}
-          >
-            <Input placeholder="Công ty" />
-          </Form.Item>
+        {/* Work Experience Section */}
+        <Col span={24}>
+          <Card title="Kinh nghiệm làm việc" style={{ marginBottom: 24 }}>
+            <Row gutter={24}>
+              <Col span={8}>
+                <Form.Item
+                  label="Công ty"
+                  name="company"
+                  rules={[{ required: true, message: 'Vui lòng nhập tên công ty!' }]}
+                >
+                  <Input placeholder="Công ty" />
+                </Form.Item>
+              </Col>
+
+              <Col span={8}>
+                <Form.Item
+                  label="Cấp bậc công việc"
+                  name="jobLevel"
+                  rules={[{ required: true, message: 'Vui lòng nhập cấp bậc công việc!' }]}
+                >
+                  <Input placeholder="Nhập cấp bậc công việc" />
+                </Form.Item>
+              </Col>
+
+
+              <Col span={24}>
+                <Form.Item
+                  label="Nhiệm vụ chính"
+                  name="primaryDuties"
+                  rules={[{ required: true, message: 'Vui lòng mô tả nhiệm vụ chính của bạn!' }]}
+                >
+                  <TextArea placeholder="Nhiệm vụ chính" rows={4} />
+                </Form.Item>
+              </Col>
+
+              <Col span={12}>
+                <Form.Item
+                  label="Ngày bắt đầu"
+                  name="startAt"
+                  rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu!' }]}
+                >
+                  <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+
+              <Col span={12}>
+                <Form.Item
+                  label="Ngày kết thúc"
+                  name="endAt"
+                >
+                  <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Card>
         </Col>
 
-        <Col span={12}>
-          <Form.Item
-            label="Nhiệm vụ chính"
-            name="primaryDuties"
-            rules={[{ required: true, message: 'Vui lòng mô tả nhiệm vụ chính của bạn!' }]}
-          >
-            <TextArea placeholder="Nhiệm vụ chính" rows={4} />
-          </Form.Item>
-        </Col>
-
-        <Col span={12}>
-          <Form.Item
-            label="Cấp bậc công việc"
-            name="jobLevel"
-            rules={[{ required: true, message: 'Vui lòng chọn cấp bậc công việc!' }]}
-          >
-            <Select>
-              <Option value="Junior">Junior</Option>
-              <Option value="Mid">Mid</Option>
-              <Option value="Senior">Senior</Option>
-              <Option value="Lead">Lead</Option>
-              <Option value="Manager">Manager</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-
-        <Col span={12}>
-          <Form.Item
-            label="Ngày bắt đầu"
-            name="startAt"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu!' }]}
-          >
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-        </Col>
-
-        <Col span={12}>
-          <Form.Item
-            label="Ngày kết thúc"
-            name="endAt"
-          >
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-        </Col>
-
+        {/* Additional Information */}
         <Col span={12}>
           <Form.Item
             label="Ngôn ngữ"

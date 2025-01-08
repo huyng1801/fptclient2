@@ -7,7 +7,7 @@ import {
   Typography,
   notification,
   Spin,
-  Select,
+  Input,
 } from "antd";
 import { useNavigate } from "react-router-dom";
 import UserLayout from "../../layouts/UserLayout";
@@ -16,8 +16,7 @@ import RequestForm from "../../components/MentorDashboard/RequestForm";
 import { PagingListItem } from "../../components/PagingListItem";
 import UserService from "../../services/UserService";
 
-const { Title, Text } = Typography;
-const { Option } = Select;
+const { Title } = Typography;
 
 const styles = {
   header: {
@@ -31,15 +30,6 @@ const styles = {
     display: "flex",
     gap: "16px",
     alignItems: "center",
-  },
-  title: {
-    margin: 0,
-    color: "#1890ff",
-  },
-  button: {
-    height: "40px",
-    borderRadius: "8px",
-    fontWeight: "500",
   },
   content: {
     marginBottom: "32px",
@@ -56,6 +46,8 @@ const styles = {
 
 function MentorDashboardPage() {
   const [mentors, setMentors] = useState([]);
+  const [filteredMentors, setFilteredMentors] = useState([]); // State for filtered mentors
+  const [searchTerm, setSearchTerm] = useState(""); // State for search input
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -69,23 +61,31 @@ function MentorDashboardPage() {
     fetchMentors();
   }, [currentPage]);
 
+  useEffect(() => {
+    // Filter mentors based on search term
+    const filtered = mentors.filter((mentor) => {
+      const fullName = `${mentor.firstName} ${mentor.lastName}`.toLowerCase();
+      return fullName.includes(searchTerm.toLowerCase());
+    });
+    setFilteredMentors(filtered);
+  }, [mentors, searchTerm]);
+  
+
   const fetchMentors = async () => {
     try {
       setLoading(true);
-   
-        const filter = {
-          roleId: 2,
-        };
+      const filter = {
+        roleId: 2,
+      };
 
-        const response = await UserService.getAllUsers(filter, {
-          page: currentPage,
-          size: itemsPerPage,
-        });
+      const response = await UserService.getAllUsers(filter, {
+        page: currentPage,
+        size: itemsPerPage,
+      });
 
-        setMentors(response.items);
-        setTotalPages(response.totalPages);
-        setError(null);
-      
+      setMentors(response.items);
+      setTotalPages(response.totalPages);
+      setError(null);
     } catch (err) {
       setError(err.message);
       notification.error({
@@ -95,6 +95,10 @@ function MentorDashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value); // Update search term
   };
 
   const handlePageChange = (page) => {
@@ -136,17 +140,23 @@ function MentorDashboardPage() {
       <div>
         <div style={styles.header}>
           <Title level={2}>Người dùng</Title>
+          <Input
+            placeholder="Search by name"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            style={{ width: "300px" }}
+          />
         </div>
-        
+
         <div style={styles.content}>
           {loading ? (
             <Spin size="large" />
           ) : (
             <Row gutter={[24, 24]}>
-              {mentors.map((mentor, index) => (
+              {filteredMentors.map((mentor, index) => (
                 <Col
                   xs={24}
-                  md={mentors.length <= 2 ? 24 : 12} // Full-width for 1-2 items, half-width otherwise
+                  md={filteredMentors.length <= 2 ? 24 : 12} // Full-width for 1-2 items, half-width otherwise
                   key={mentor.userId || index} // Added index as a fallback key
                 >
                   <MentorCard

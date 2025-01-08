@@ -30,12 +30,13 @@ import AlumniPage from "./pages/user/AlumniPage";
 import MentorDetailsPage from "./pages/user/MentorDetailsPage";
 import MentorRequestListPage from "./pages/user/MentorRequestListPage";
 import RequestDetailPage from "./pages/user/RequestDetailPage";
-import SchedulePage from "./pages/user/SchedulePage";
+import ScheduleListPage from "./pages/user/ScheduleListPage";
 import MentorRatingPage from "./pages/user/MentorRatingPage";
 import MyEventPage from "./pages/user/MyEventPage";
 import ProfilePage from "./pages/user/ProfilePage";
 import MyJobPostPage from "./pages/user/MyJobPostPage";
 import UserJobApplicationPage from "./pages/user/UserJobApplicationPage";
+import CreateSchedulePage from "./pages/user/CreateSchedulePage";
 
 function App() {
   return (
@@ -54,10 +55,12 @@ function App() {
         <Route path="/user/:id" element={<MentorDetailsPage />} />
         <Route path="/mentor-requests" element={<MentorRequestListPage />} />
         <Route path="/request/:id" element={<RequestDetailPage />} />
-        <Route path="/schedule" element={<SchedulePage />} />
+        <Route path="/schedule" element={<ScheduleListPage />} />
+        <Route path="/create-schedule/:mentorshipId" element={<CreateSchedulePage />} />
         <Route path="/rating" element={<MentorRatingPage />} />
         <Route path="/event/:id" element={<EventDetailsPage />} />
         <Route path="/create-post" element={<CreatePostPage />} />
+
         <Route path="/user-event" element={<UserEventPage />} />
         <Route path="/user-job-post" element={<UserJobPostPage />} />
         <Route path="/create-event" element={<CreateEventPage />} />
