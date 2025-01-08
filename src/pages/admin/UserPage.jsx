@@ -128,18 +128,38 @@ const UserPage = () => {
     { title: 'Họ', dataIndex: 'lastName', key: 'lastName' },
     { title: 'Email', dataIndex: 'email', key: 'email' },
     {
+      title: 'Mentor',
+      dataIndex: 'isMentor',
+      key: 'isMentor',
+      render: (isMentor) => (isMentor ? 'Có' : 'Không')
+    },    
+    {
       title: 'Vai trò',
       dataIndex: 'roleId',
       key: 'roleId',
-      render: (roleId) => (roleId === 1 ? 'Quản trị' : 'Người dùng')
-    },
+      render: (roleId) => {
+        switch (roleId) {
+          case 1:
+            return 'Quản trị'; 
+          case 2:
+            return 'Cựu sinh viên';
+          case 3:
+            return 'Sinh viên';
+          case 4:
+            return 'Nhà tuyển dụng'; 
+          default:
+            return 'Không xác định';
+        }
+      },
+    }
+    ,
     {
       title: 'Ngành',
       dataIndex: 'majorId',
       key: 'majorId',
       render: (majorId) => {
-        const major = majors.find(m => m.id === majorId);
-        return major ? major.name : 'N/A';
+        const major = majors.find(m => m.majorId === majorId);
+        return major ? major.majorName : 'N/A';
       }
     },
     {
@@ -231,10 +251,13 @@ const UserPage = () => {
                   label="Vai trò"
                   rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
                 >
-                  <Select placeholder="Chọn vai trò">
-                    <Option value={1}>Quản trị</Option>
-                    <Option value={2}>Người dùng</Option>
-                  </Select>
+              <Select placeholder="Chọn vai trò">
+                <Option value={1}>Admin</Option>
+                <Option value={2}>Alumni</Option>
+                <Option value={3}>Student</Option>
+                <Option value={4}>Recruiter</Option>
+              </Select>
+
                 </Form.Item>
                 
                 <Form.Item

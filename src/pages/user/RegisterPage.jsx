@@ -73,7 +73,7 @@ const styles = {
     color: '#262626',
   },
   highlight: {
-    color: '#ffc107',
+    color: '#F05123',
     fontWeight: 'bold',
   },
   inputGroup: {
@@ -90,8 +90,8 @@ const styles = {
     width: '100%',
     height: '45px',
     fontSize: '16px',
-    background: '#ffc107',
-    borderColor: '#ffc107',
+    background: '#F05123',
+    borderColor: '#F05123',
     marginTop: '24px',
     '&:hover': {
       background: '#ffb300',

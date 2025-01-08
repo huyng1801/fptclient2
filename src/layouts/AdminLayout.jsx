@@ -1,19 +1,34 @@
-import React from 'react';
-import { Layout, Menu, Breadcrumb } from 'antd';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Layout, Menu, Breadcrumb, Button } from 'antd';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   HomeOutlined,
   UserOutlined,
   FileTextOutlined,
   UserSwitchOutlined,
   AppstoreAddOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  LogoutOutlined
 } from '@ant-design/icons';
 
 const { Header, Content, Sider } = Layout;
 
 const AdminLayout = ({ children, headerName = 'Admin' }) => {
-  const location = useLocation(); // Get the current location
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+    if (!userInfo || userInfo.roleName !== 'Admin') {
+      navigate('/');
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    sessionStorage.clear();
+    navigate('/login');
+  };
+
   const siderStyle = {
     minHeight: '100vh',
     background: '#fff'
@@ -46,8 +61,7 @@ const AdminLayout = ({ children, headerName = 'Admin' }) => {
   };
 
   const breadcrumbStyle = {
-    margin: '16px 0',
-
+    margin: '16px 0'
   };
 
   const layoutContentStyle = {
@@ -55,10 +69,13 @@ const AdminLayout = ({ children, headerName = 'Admin' }) => {
   };
 
   const linkStyle = {
-    textDecoration: 'none', // Remove text decoration from links
+    textDecoration: 'none'
   };
 
-  // Determine the selected key based on the current path
+  const logoutButtonStyle = {
+    marginLeft: 'auto'
+  };
+
   const getSelectedKey = (path) => {
     switch (path) {
       case '/admin/dashboard':
@@ -76,7 +93,7 @@ const AdminLayout = ({ children, headerName = 'Admin' }) => {
       case '/admin/jobposts':
         return '7';
       default:
-        return '1'; // Default to '1' if no match
+        return '1';
     }
   };
 
@@ -93,7 +110,7 @@ const AdminLayout = ({ children, headerName = 'Admin' }) => {
         </div>
         <Menu
           mode="inline"
-          selectedKeys={[getSelectedKey(location.pathname)]} // Set the selected menu item dynamically
+          selectedKeys={[getSelectedKey(location.pathname)]}
           style={{ height: '100%', borderRight: 0 }}
         >
           <Menu.Item key="1" icon={<HomeOutlined />}>
@@ -124,6 +141,15 @@ const AdminLayout = ({ children, headerName = 'Admin' }) => {
           <div>
             <span style={{ color: 'white' }}>{headerName}</span>
           </div>
+          <Button
+            type="primary"
+            icon={<LogoutOutlined />}
+            onClick={handleLogout}
+            style={logoutButtonStyle}
+            danger
+          >
+            Đăng xuất
+          </Button>
         </Header>
         <Content style={contentStyle}>
           <Breadcrumb style={breadcrumbStyle}>

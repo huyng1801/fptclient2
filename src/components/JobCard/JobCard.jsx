@@ -38,98 +38,15 @@ function JobCard({ job, onClick }) {
   }, [job.userId]);
 
   const styles = {
-    card: {
-      marginBottom: "20px",
-      borderRadius: "16px",
-      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-      border: "1px solid #f0f0f0",
-      transition: "all 0.3s ease",
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-    },
-    cardBody: {
-      padding: "24px",
-    },
-    header: {
-      marginBottom: "20px",
-    },
-    title: {
-      fontSize: "22px",
-      fontWeight: "600",
-      color: "#1a1a1a",
-      marginBottom: "12px",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      display: "-webkit-box",
-      WebkitLineClamp: 2,
-      WebkitBoxOrient: "vertical",
-    },
-    companyInfo: {
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      color: "#666",
-      fontSize: "14px",
-      marginBottom: "16px",
-    },
-    salary: {
-      background: "linear-gradient(45deg, #f6ffed, #e6fffb)",
-      border: "1px solid #b7eb8f",
-      borderRadius: "8px",
-      padding: "12px 16px",
-      marginBottom: "20px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    description: {
-      fontSize: "14px",
-      color: "#666",
-      marginBottom: "20px",
-    },
-    infoSection: {
-      background: "#fafafa",
-      borderRadius: "8px",
-      padding: "16px",
-      marginBottom: "20px",
-    },
-    infoItem: {
-      display: "flex",
-      alignItems: "flex-start",
-      gap: "12px",
-      marginBottom: "12px",
-      color: "#595959",
-      fontSize: "14px",
-    },
-    icon: {
-      fontSize: "16px",
-      marginTop: "4px",
-    },
-    footer: {
-      marginTop: "auto",
-      padding: "16px",
-      borderTop: "1px solid #f0f0f0",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      background: "#fff",
-    },
-    tags: {
-      display: "flex",
-      gap: "8px",
-      flexWrap: "wrap",
-      marginBottom: "16px",
-    },
-    viewButton: {
-      borderRadius: "8px",
-      height: "40px",
-      padding: "0 24px",
-      fontWeight: "500",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-    },
+    // ... keep existing styles ...
+    statusTag: {
+      position: 'absolute',
+      top: '12px',
+      right: '12px',
+      padding: '4px 12px',
+      borderRadius: '4px',
+      fontWeight: '500'
+    }
   };
 
   return (
@@ -142,27 +59,32 @@ function JobCard({ job, onClick }) {
       <div style={styles.header}>
         <Title level={4} style={styles.title}>
           {job.jobTitle}
+          <Tag 
+            color={job.status === 'Open' ? 'success' : 'error'} 
+            style={styles.statusTag}
+          >
+            {job.status === 'Open' ? 'Đang tuyển' : 'Đã đóng'}
+          </Tag>
         </Title>
         <div style={styles.companyInfo}>
-        <div className="flex items-center gap-3 mb-4">
-        <Avatar 
-          size={48} 
-          icon={<UserOutlined />}
-          src={creator?.profilePicture}
-        >
-          {creator?.firstName?.charAt(0)}
-        </Avatar>
-        <div className="flex-1">
-          <Text strong>
-           Người đăng: {creator ? `${creator.firstName} ${creator.lastName}` : "Đang tải..."}
-          </Text>
-          <br />
-          <Text type="secondary" className="text-sm">
-          Ngày đăng: {format(new Date(job.createdAt), 'dd/MM/yyyy')}
-          </Text>
-        </div>
-      
-      </div>
+          <div className="flex items-center gap-3 mb-4">
+            <Avatar 
+              size={48} 
+              icon={<UserOutlined />}
+              src={creator?.profilePicture}
+            >
+              {creator?.firstName?.charAt(0)}
+            </Avatar>
+            <div className="flex-1">
+              <Text strong>
+                Người đăng: {creator ? `${creator.firstName} ${creator.lastName}` : "Đang tải..."}
+              </Text>
+              <br />
+              <Text type="secondary" className="text-sm">
+                Ngày đăng: {format(new Date(job.createdAt), 'dd/MM/yyyy')}
+              </Text>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -211,8 +133,9 @@ function JobCard({ job, onClick }) {
           type="primary"
           style={styles.viewButton}
           icon={<ArrowRightOutlined />}
+          disabled={job.status !== 'Open'}
         >
-          Xem chi tiết
+          {job.status === 'Open' ? 'Xem chi tiết' : 'Đã đóng tuyển dụng'}
         </Button>
       </div>
     </Card>

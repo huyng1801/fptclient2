@@ -64,7 +64,7 @@ const styles = {
     color: '#262626',
   },
   highlight: {
-    color: '#ffc107',
+    color: '#F05123',
     fontWeight: 'bold',
   },
   input: {
@@ -106,8 +106,8 @@ const styles = {
     width: '100%',
     height: '45px',
     fontSize: '16px',
-    background: '#ffc107',
-    borderColor: '#ffc107',
+    background: '#F05123',
+    borderColor: '#F05123',
     fontWeight: 500,
     '&:hover': {
       background: '#ffb300',
@@ -164,10 +164,15 @@ const LoginPage = () => {
     try {
       const response = await handleEmailPasswordLogin(email, password);
       if (response.userInfo.email) {
+        const userInfo = response.userInfo;
         sessionStorage.setItem('accessToken', response.accessToken);
-        sessionStorage.setItem('userInfo', JSON.stringify(response.userInfo));
+        sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
         message.success('Đăng nhập thành công!');
-        navigate('/');
+        if (userInfo.roleName === "Admin") {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
       message.error('Email hoặc mật khẩu không chính xác!');

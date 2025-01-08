@@ -64,8 +64,13 @@ const UserJobPostPage = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handleViewDetails = (jobId) => {
-    navigate(`/user-job-post/${jobId}`);
+  const handleViewDetails = (job) => {
+    if(job.status === "Closed"){
+   
+    }
+    else {
+      navigate(`/user-job-post/${job.jobPostId}`);
+    }
   };
 
   const handleApply = (jobId) => {
@@ -154,7 +159,7 @@ const UserJobPostPage = () => {
               <Col xs={24} sm={24} md={12} lg={8} key={job.jobPostId}>
                 <JobCard
                   job={job}
-                  onClick={() => handleViewDetails(job.jobPostId)}
+                  onClick={() => handleViewDetails(job)}
                   onApply={() => handleApply(job.jobPostId)}
                 />
               </Col>

@@ -100,6 +100,9 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
             </MenuSection>
 
             <MenuSection title="Công việc">
+            <MenuItem icon={<FileTextOutlined />} path="/user-job-post" itemKey="11">
+              Công việc
+            </MenuItem>
               {(isStudent || isAlumni || true) && (
                 <MenuItem icon={<ProfileOutlined />} path="/cv" itemKey="12">
                   CV của tôi

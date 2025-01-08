@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Table, Card, Input, Select, Tag, Space, Button, notification } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Typography, Table, Card, Input, Select, Tag, Space, Button, notification, Modal, Form } from 'antd';
+import { SearchOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import UserLayout from '../../layouts/UserLayout';
 import JobPostService from '../../services/JobPostService';
 
 const { Title } = Typography;
 const { Option } = Select;
+const { TextArea } = Input;
 
 const MyJobPostPage = () => {
   const [jobPosts, setJobPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
+  const [form] = Form.useForm();
   const navigate = useNavigate();
   const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
 
@@ -32,6 +36,42 @@ const MyJobPostPage = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEdit = (job) => {
+    setEditingJob(job);
+    form.setFieldsValue({
+      jobTitle: job.jobTitle,
+      description: job.description,
+      requirements: job.requirements,
+      benefits: job.benefits,
+      location: job.location,
+      minSalary: job.minSalary,
+      maxSalary: job.maxSalary,
+      status: job.status
+    });
+    setEditModalVisible(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      await JobPostService.updateJobPost(editingJob.jobPostId, {
+        ...editingJob,
+        ...values
+      });
+      notification.success({
+        message: 'Thành công',
+        description: 'Cập nhật việc làm thành công',
+      });
+      setEditModalVisible(false);
+      fetchMyJobPosts();
+    } catch (error) {
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không thể cập nhật việc làm',
+      });
     }
   };
 
@@ -92,6 +132,12 @@ const MyJobPostPage = () => {
           >
             Xem ứng viên
           </Button>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            Sửa
+          </Button>
         </Space>
       ),
     },
@@ -148,6 +194,88 @@ const MyJobPostPage = () => {
             }}
           />
         </Card>
+
+        <Modal
+          title="Chỉnh sửa việc làm"
+          open={editModalVisible}
+          onOk={handleEditSubmit}
+          onCancel={() => setEditModalVisible(false)}
+          width={800}
+        >
+          <Form
+            form={form}
+            layout="vertical"
+          >
+            <Form.Item
+              name="jobTitle"
+              label="Tiêu đề công việc"
+              rules={[{ required: true, message: 'Vui lòng nhập tiêu đề công việc' }]}
+            >
+              <Input />
+            </Form.Item>
+
+            <Form.Item
+              name="description"
+              label="Mô tả công việc"
+              rules={[{ required: true, message: 'Vui lòng nhập mô tả công việc' }]}
+            >
+              <TextArea rows={4} />
+            </Form.Item>
+
+            <Form.Item
+              name="requirements"
+              label="Yêu cầu"
+              rules={[{ required: true, message: 'Vui lòng nhập yêu cầu công việc' }]}
+            >
+              <TextArea rows={4} />
+            </Form.Item>
+
+            <Form.Item
+              name="benefits"
+              label="Quyền lợi"
+              rules={[{ required: true, message: 'Vui lòng nhập quyền lợi' }]}
+            >
+              <TextArea rows={4} />
+            </Form.Item>
+
+            <Form.Item
+              name="location"
+              label="Địa điểm"
+              rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}
+            >
+              <Input />
+            </Form.Item>
+
+            <Space size="large">
+              <Form.Item
+                name="minSalary"
+                label="Lương tối thiểu"
+                rules={[{ required: true, message: 'Vui lòng nhập lương tối thiểu' }]}
+              >
+                <Input type="number" prefix="$" />
+              </Form.Item>
+
+              <Form.Item
+                name="maxSalary"
+                label="Lương tối đa"
+                rules={[{ required: true, message: 'Vui lòng nhập lương tối đa' }]}
+              >
+                <Input type="number" prefix="$" />
+              </Form.Item>
+            </Space>
+
+            <Form.Item
+              name="status"
+              label="Trạng thái"
+              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+            >
+              <Select>
+                <Option value="Open">Đang mở</Option>
+                <Option value="Closed">Đã đóng</Option>
+              </Select>
+            </Form.Item>
+          </Form>
+        </Modal>
       </div>
     </UserLayout>
   );
