@@ -233,9 +233,9 @@ function MentorDetailsPage() {
                   thông tin. Chuyên môn sâu về phát triển phần mềm và hướng dẫn
                   sinh viên.
                 </Paragraph>
-                <Button type="primary" size="large" block>
+                {/* <Button type="primary" size="large" block>
                   Gửi yêu cầu kết nối
-                </Button>
+                </Button> */}
               </div>
             )}
           </div>

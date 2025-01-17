@@ -39,8 +39,21 @@ const updateUserInfo = async (userId, userInfo) => {
   }
 };
 
+// Function to update user information
+const createUser = async (userInfo) => {
+  try {
+    userInfo.password = "12345678";
+    const response = await ApiService.post(`/auth/register`, userInfo);
+    return response.data; // Return the response from the API
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error; // Propagate the error to the calling function
+  }
+};
+
 // Export the functions as a default export
 const UserService = {
+  createUser,
   getUser,
   getAllUsers,
   updateUserInfo,

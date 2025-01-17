@@ -100,11 +100,16 @@ function HomePage() {
           UserService.getAllUsers(),
         ]);
         const storedUserInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
+        if (userInfo.roleName === 'Recruiter') {
+       
+          navigate('/my-job-post'); 
+        }
         if (storedUserInfo.userId) {
           const userData = await UserService.getUser(storedUserInfo.userId);
           setUserInfo(userData);
           sessionStorage.setItem('userInfo', JSON.stringify(userData));
         }
+
         setOriginalPosts(postsData.items);
         setOriginalEvents(eventsData.items);
         setOriginalJobs(jobsData.items);

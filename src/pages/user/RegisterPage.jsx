@@ -118,8 +118,9 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
-  const [major, setMajor] = useState('');
-  const [role, setRole] = useState('');
+  const [major, setMajor] = useState(undefined);
+  const [role, setRole] = useState(undefined);
+  
   const [majors, setMajors] = useState([]);
   const navigate = useNavigate();
 
@@ -141,15 +142,18 @@ const RegisterPage = () => {
       message.error('Vui lòng điền đầy đủ thông tin bắt buộc!');
       return;
     }
-
+    if (password.length < 8) {
+      message.error('Mật khẩu phải có ít nhất 8 ký tự!');
+      return;
+    }
     try {
       const response = await handleUserRegistration(firstName, lastName, email, password, code);
-      if (response?.message) {
+      if (response?.userId) {
         message.success('Đăng ký thành công! Đang chuyển hướng...');
         setTimeout(() => navigate('/login'), 2000);
       }
     } catch (err) {
-      message.error('Đăng ký thất bại. Vui lòng thử lại!');
+      message.error('Email hoặc mã giới thiệu đã được sử dụng!');
     }
   };
 
@@ -254,9 +258,9 @@ const RegisterPage = () => {
                   onChange={setRole}
                   style={styles.select}
                 >
-                  <Option value={1}>Cựu sinh viên</Option>
-                  <Option value={2}>Sinh viên</Option>
-                  <Option value={3}>Nhà tuyển dụng</Option>
+                  <Option value={2}>Cựu sinh viên</Option>
+                  <Option value={3}>Sinh viên</Option>
+                  <Option value={4}>Nhà tuyển dụng</Option>
                 </Select>
               </div>
 

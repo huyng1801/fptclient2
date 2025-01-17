@@ -106,6 +106,8 @@ const ScheduleListPage = () => {
     }
   };
 
+  const isMentor = userInfo?.isMentor;
+
   const columns = [
     {
       title: 'Thời gian bắt đầu',
@@ -136,7 +138,7 @@ const ScheduleListPage = () => {
         </Tag>
       ),
     },
-    {
+    !isMentor && {
       title: 'Đánh giá',
       dataIndex: 'rating',
       key: 'rating',
@@ -199,7 +201,8 @@ const ScheduleListPage = () => {
         </Space>
       ),
     },
-  ];
+  ].filter(Boolean); // Filter out undefined columns
+  
 
   return (
     <UserLayout>

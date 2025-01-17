@@ -138,13 +138,13 @@ const MentorshipRequestPage = () => {
       width: 120,
       render: (_, record) => (
         <>
-          <Button
+          {/* <Button
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
             style={{ marginRight: 8 }}
             type="default"
             shape="circle"
-          />
+          /> */}
           <Button
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record.id)}
@@ -160,14 +160,14 @@ const MentorshipRequestPage = () => {
   return (
     <AdminLayout headerName="Yêu cầu hướng dẫn">
       <Layout.Content style={{ padding: '24px' }}>
-        <Button 
+        {/* <Button 
           type="primary" 
           icon={<PlusOutlined />}
           onClick={() => setIsModalVisible(true)}
           style={{ marginBottom: 16 }}
         >
           Tạo yêu cầu
-        </Button>
+        </Button> */}
 
         <Table 
           columns={columns} 

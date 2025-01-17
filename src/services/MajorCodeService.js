@@ -1,15 +1,12 @@
-import ApiService, { setAuthToken } from './ApiService'; // Import the ApiService instance
+import ApiService from './ApiService';
 
 const MajorCodeService = {
   // Function to create a new major code
-  async createMajorCode(data, token) {
+  async createMajorCode(data) {
     try {
-      if (token) {
-        setAuthToken(token);
-      }
-
+      console.log(data);
       const response = await ApiService.post('/majorcodes', data);
-      return response.data; // Return the response data (e.g., the created MajorCode)
+      return response.data;
     } catch (error) {
       console.error('Error creating MajorCode:', error);
       throw error;
@@ -17,14 +14,10 @@ const MajorCodeService = {
   },
 
   // Function to get a major code by ID
-  async getMajorCodeById(id, token) {
+  async getMajorCodeById(id) {
     try {
-      if (token) {
-        setAuthToken(token);
-      }
-
       const response = await ApiService.get(`/majorcodes/${id}`);
-      return response.data; // Return the response data (e.g., the MajorCode)
+      return response.data;
     } catch (error) {
       console.error('Error fetching MajorCode by ID:', error);
       throw error;
@@ -32,12 +25,8 @@ const MajorCodeService = {
   },
 
   // Function to update a major code by ID
-  async updateMajorCode(id, data, token) {
+  async updateMajorCode(id, data) {
     try {
-      if (token) {
-        setAuthToken(token);
-      }
-
       const response = await ApiService.put(`/majorcodes/${id}`, data);
       return response.data; 
     } catch (error) {
@@ -46,12 +35,17 @@ const MajorCodeService = {
     }
   },
 
-  async getAllMajorCodes() {
+  // Function to get all major codes with filter and pagination
+  async getAllMajorCodes(filter = {}, pagingModel = { page: 1, size: 10 }) {
     try {
+      const params = {
+        ...filter,
+        page: pagingModel.page,
+        size: pagingModel.size
+      };
 
-      const response = await ApiService.get(`/majorcodes`, {
-      });
-      return response.data; 
+      const response = await ApiService.get('/majorcodes', { params });
+      return response.data;
     } catch (error) {
       console.error('Error fetching MajorCodes:', error);
       throw error;

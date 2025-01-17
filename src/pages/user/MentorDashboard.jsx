@@ -116,7 +116,7 @@ function MentorDashboardPage() {
   };
 
   const showMentorDashboardDetails = (mentorId) => {
-    navigate(`/user/${mentorId}`);
+    // navigate(`/user/${mentorId}`);
   };
 
   if (error) {

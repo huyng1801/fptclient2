@@ -12,12 +12,25 @@ const MajorCodePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMajorCode, setEditingMajorCode] = useState(null);
   const [form] = Form.useForm();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
 
-  const fetchMajorCodes = async () => {
+  const fetchMajorCodes = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true);
-      const response = await MajorCodeService.getAllMajorCodes();
+      const response = await MajorCodeService.getAllMajorCodes(
+        {}, // filter
+        { page, size: pageSize }
+      );
       setMajorCodes(response.items || []);
+      setPagination({
+        current: page,
+        pageSize: pageSize,
+        total: response.total || 0
+      });
     } catch (error) {
       message.error('Không thể tải danh sách mã ngành');
     } finally {
@@ -26,8 +39,12 @@ const MajorCodePage = () => {
   };
 
   useEffect(() => {
-    fetchMajorCodes();
+    fetchMajorCodes(pagination.current, pagination.pageSize);
   }, []);
+
+  const handleTableChange = (newPagination) => {
+    fetchMajorCodes(newPagination.current, newPagination.pageSize);
+  };
 
   const openModal = (majorCode = null) => {
     setEditingMajorCode(majorCode);
@@ -56,7 +73,7 @@ const MajorCodePage = () => {
       setIsModalOpen(false);
       setEditingMajorCode(null);
       form.resetFields();
-      fetchMajorCodes();
+      fetchMajorCodes(pagination.current, pagination.pageSize);
     } catch (error) {
       message.error('Có lỗi xảy ra. Vui lòng thử lại');
     }
@@ -70,7 +87,7 @@ const MajorCodePage = () => {
         try {
           await MajorCodeService.deleteMajorCode(majorId);
           message.success('Xóa mã ngành thành công');
-          fetchMajorCodes();
+          fetchMajorCodes(pagination.current, pagination.pageSize);
         } catch (error) {
           message.error('Không thể xóa mã ngành');
         }
@@ -122,6 +139,13 @@ const MajorCodePage = () => {
           dataSource={majorCodes}
           rowKey="majorId"
           loading={loading}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showTotal: (total) => `Tổng ${total} mã ngành`,
+            pageSizeOptions: ['10', '20', '50']
+          }}
+          onChange={handleTableChange}
         />
 
         <Modal

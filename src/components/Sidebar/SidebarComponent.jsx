@@ -70,6 +70,9 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
               <MenuItem icon={<HomeOutlined />} path="/" itemKey="1">
                 Trang chủ
               </MenuItem>
+              <MenuItem icon={<DashboardOutlined />} path="/alumni" itemKey="9">
+                Cựu sinh viên
+              </MenuItem>
               <MenuItem icon={<FileTextOutlined />} path="/list-post" itemKey="2">
                 Bài viết
               </MenuItem>
@@ -94,9 +97,7 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
               <MenuItem icon={<FileDoneOutlined />} path="/rating" itemKey="8">
                 Đánh giá mentor
               </MenuItem>
-              <MenuItem icon={<DashboardOutlined />} path="/alumni" itemKey="9">
-                Cựu sinh viên
-              </MenuItem>
+        
             </MenuSection>
 
             <MenuSection title="Công việc">

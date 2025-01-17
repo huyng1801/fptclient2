@@ -121,12 +121,7 @@ const MyJobPostPage = () => {
       key: 'action',
       render: (_, record) => (
         <Space>
-          <Button 
-            type="primary" 
-            onClick={() => navigate(`/user-job-post/${record.jobPostId}`)}
-          >
-            Chi tiết
-          </Button>
+
           <Button 
             onClick={() => navigate(`/job-applications/${record.jobPostId}`)}
           >

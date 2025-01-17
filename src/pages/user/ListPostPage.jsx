@@ -256,8 +256,7 @@ function ListPostPage() {
                   onChange={handleSortChange}
                   style={{ width: "200px" }}
                 >
-                  <Option value="dateDesc">Mới nhất</Option>
-                  <Option value="dateAsc">Cũ nhất</Option>
+
                   <Option value="titleAsc">Tên A-Z</Option>
                   <Option value="titleDesc">Tên Z-A</Option>
                 </Select>

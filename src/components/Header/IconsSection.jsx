@@ -1,44 +1,72 @@
 import React from 'react';
-import { Dropdown, Badge } from 'antd';
-import { BellOutlined, UserOutlined } from '@ant-design/icons';
-import NotificationMenu from './NotificationMenu';
-import UserMenu from './UserMenu';
+import { Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
-const iconStyle = {
-  fontSize: 24,
-  cursor: 'pointer'
+const buttonStyle = {
+  borderRadius: '4px',
+  padding: '8px 16px',
+  fontSize: '14px',
+  fontWeight: 'bold',
+  margin: '0 8px',
 };
 
-const IconsSection = ({ onNotificationToggle, onMenuToggle }) => (
-  <div style={{ display: 'flex', alignItems: 'center' }}>
-    <Dropdown
-      overlay={<NotificationMenu />}
-      trigger={['click']}
-      onVisibleChange={onNotificationToggle}
-    >
-      <Badge
-        count={2}
-        overflowCount={99}
-        style={{
-          marginRight: 20,
-          cursor: 'pointer'
-        }}
-      >
-        <BellOutlined style={iconStyle} />
-      </Badge>
-    </Dropdown>
+const IconsSection = () => {
+  const navigate = useNavigate();
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo')); // Get user info from localStorage
 
-    <Dropdown 
-      overlay={<UserMenu />} 
-      trigger={['click']} 
-      onVisibleChange={onMenuToggle}
-    >
-      <UserOutlined style={{
-        ...iconStyle,
-        margin: '0 15px'
-      }} />
-    </Dropdown>
-  </div>
-);
+  const handleLogout = () => {
+    sessionStorage.removeItem('accessToken'); // Remove token
+    sessionStorage.removeItem('userInfo'); // Remove user info
+    navigate('/login'); // Redirect to login page
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      {userInfo ? (
+        <>
+          <span style={{ marginRight: '16px', fontWeight: 'bold' }}>
+            Xin chào, {userInfo.firstName} {userInfo.lastName} ({userInfo.roleName})
+          </span>
+          <Button
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#f5222d',
+              color: '#fff',
+              border: 'none',
+            }}
+            onClick={handleLogout}
+          >
+            Đăng xuất
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#1890ff',
+              color: '#fff',
+              border: 'none',
+            }}
+            onClick={() => navigate('/login')}
+          >
+            Đăng nhập
+          </Button>
+          <Button
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#52c41a',
+              color: '#fff',
+              border: 'none',
+            }}
+            onClick={() => navigate('/register')}
+          >
+            Đăng ký
+          </Button>
+        </>
+      )}
+    </div>
+  );
+};
 
 export default IconsSection;

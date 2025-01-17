@@ -64,6 +64,7 @@ const styles = {
 };
 
 const UserJobPostDetailsPage = () => {
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
   const { id } = useParams();
   const navigate = useNavigate();
   const [jobPost, setJobPost] = useState(null);
@@ -107,7 +108,7 @@ useEffect(() => {
 
   const checkUserCV = async () => {
     try {
-      const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+  
       if (!userInfo?.userId) {
         notification.error({
           message: 'Chưa đăng nhập',
@@ -235,7 +236,7 @@ useEffect(() => {
           {/* Salary Section */}
           <div style={styles.section}>
             <Tag color="green" style={styles.salaryTag}>
-              <DollarOutlined /> {jobPost.minSalary} - {jobPost.maxSalary} USD
+              <DollarOutlined /> {jobPost.minSalary} - {jobPost.maxSalary} đ
               {jobPost.isDeal && ' (Có thể thương lượng)'}
             </Tag>
           </div>
@@ -286,55 +287,58 @@ useEffect(() => {
             </Descriptions>
           </div>
 
-          {/* Application Form */}
-          <Form
-        form={form}
-        name="applyForm"
-        layout="vertical"
-        style={styles.applicationForm}
-        onFinish={handleApply}
-      >
-        <Card title="Thông tin ứng tuyển">
-          <Space direction="vertical" style={{ width: '100%' }}>
-            {selectedCV ? (
-              <Card size="small" style={{ marginBottom: 16 }}>
-                <Space>
-                  <FileOutlined />
-                  <span>{selectedCV.fullName} - {selectedCV.jobLevel}</span>
-                  <Button size="small" onClick={handleShowCVModal}>
-                    Đổi CV khác
-                  </Button>
-                </Space>
-              </Card>
-            ) : (
-              <Button 
-                type="dashed" 
-                onClick={handleShowCVModal}
-                icon={<FileOutlined />}
-                block
-                style={{ marginBottom: 16 }}
-              >
-                Chọn CV của bạn
+    {/* Application Form */}
+{jobPost.userId !== userInfo?.userId && (
+  <Form
+    form={form}
+    name="applyForm"
+    layout="vertical"
+    style={styles.applicationForm}
+    onFinish={handleApply}
+  >
+    <Card title="Thông tin ứng tuyển">
+      <Space direction="vertical" style={{ width: '100%' }}>
+        {selectedCV ? (
+          <Card size="small" style={{ marginBottom: 16 }}>
+            <Space>
+              <FileOutlined />
+              <span>{selectedCV.fullName} - {selectedCV.jobLevel}</span>
+              <Button size="small" onClick={handleShowCVModal}>
+                Đổi CV khác
               </Button>
-            )}
+            </Space>
+          </Card>
+        ) : (
+          <Button 
+            type="dashed" 
+            onClick={handleShowCVModal}
+            icon={<FileOutlined />}
+            block
+            style={{ marginBottom: 16 }}
+          >
+            Chọn CV của bạn
+          </Button>
+        )}
 
-            <Form.Item
-              label="Thư xin việc"
-              name="coverLetter"
-              rules={[{ required: true, message: 'Vui lòng nhập thư xin việc của bạn!' }]}
-            >
-              <Input.TextArea 
-                rows={4} 
-                placeholder="Viết thư xin việc của bạn ở đây..." 
-              />
-            </Form.Item>
+        <Form.Item
+          label="Thư xin việc"
+          name="coverLetter"
+          rules={[{ required: true, message: 'Vui lòng nhập thư xin việc của bạn!' }]}
+        >
+          <Input.TextArea 
+            rows={4} 
+            placeholder="Viết thư xin việc của bạn ở đây..." 
+          />
+        </Form.Item>
 
-            <Button type="primary" htmlType="submit" block>
-              Gửi đơn ứng tuyển
-            </Button>
-          </Space>
-        </Card>
-      </Form>
+        <Button type="primary" htmlType="submit" block>
+          Gửi đơn ứng tuyển
+        </Button>
+      </Space>
+    </Card>
+  </Form>
+)}
+
 
       {hasCV && (
         <CVSelectionModal

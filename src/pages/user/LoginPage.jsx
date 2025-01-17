@@ -199,7 +199,7 @@ const LoginPage = () => {
               <Title level={2} style={styles.title}>
                 Chào mừng đến với <span style={styles.highlight}>Alumni Connect</span>
               </Title>
-
+{/* 
               <Button 
                 icon={<GoogleOutlined />}
                 style={styles.googleButton}
@@ -212,7 +212,7 @@ const LoginPage = () => {
                 <div style={styles.dividerLine} />
                 <Text style={styles.dividerText}>HOẶC</Text>
                 <div style={styles.dividerLine} />
-              </div>
+              </div> */}
 
               <Input
                 size="large"
