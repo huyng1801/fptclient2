@@ -190,38 +190,38 @@ function MentorRequestListPage() {
 
   const handleCreateRequest = async (values) => {
     try {
-    await MentorshipService.createMentorship({
-    alumniId: userInfo.userId,
-    ...values,
-    });
-    notification.success({
-    message: "Thành công",
-    description: "Tạo yêu cầu mentorship thành công",
-    });
-    setModalVisible(false);
-    form.resetFields();
-    fetchMentorships();
+      await MentorshipService.createMentorship({
+        aumniId: userInfo.userId,
+        ...values,
+      });
+      notification.success({
+        message: "Thành công",
+        description: "Tạo yêu cầu mentorship thành công",
+      });
+      setModalVisible(false);
+      form.resetFields();
+      fetchMentorships();
     } catch (error) {
-    notification.error({
-    message: "Lỗi",
-    description: "Không thể tạo yêu cầu mentorship",
-    });
+      notification.error({
+        message: "Lỗi",
+        description: "Không thể tạo yêu cầu mentorship",
+      });
     }
-    };
-    
-    const handleViewDetails = (mentorshipId) => {
+  };
+
+  const handleViewDetails = (mentorshipId) => {
     navigate(`/create-schedule/${mentorshipId}`);
-    };
-    
-    if (loading) {
+  };
+
+  if (loading) {
     return (
-    <UserLayout>
-    <div style={styles.loadingContainer}>
-    <Spin size="large" />
-    </div>
-    </UserLayout>
+      <UserLayout>
+        <div style={styles.loadingContainer}>
+          <Spin size="large" />
+        </div>
+      </UserLayout>
     );
-    }
+  }
   return (
     <UserLayout>
       <div style={styles.container}>
@@ -272,7 +272,11 @@ function MentorRequestListPage() {
               <Col xs={24} sm={24} md={12} lg={8} key={mentorship.id}>
                 <Card style={styles.card} hoverable>
                   <div style={styles.cardMeta}>
-                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                    <Space
+                      direction="vertical"
+                      size="small"
+                      style={{ width: "100%" }}
+                    >
                       <Space>
                         <Tag
                           icon={<BookOutlined />}
@@ -289,27 +293,40 @@ function MentorRequestListPage() {
                           {mentorship.status}
                         </Tag>
                       </Space>
-                      
-                      {mentorship.aumniId && mentorshipUsers[mentorship.aumniId] && (
-                        <Space align="center">
-                          <Avatar 
-                            size={32} 
-                            icon={<UserOutlined />}
-                            src={mentorshipUsers[mentorship.aumniId].profilePicture}
-                          >
-                            {mentorshipUsers[mentorship.aumniId].firstName?.charAt(0)}
-                          </Avatar>
-                          <div>
-                            <Text strong>
-                              {`${mentorshipUsers[mentorship.aumniId].firstName} ${mentorshipUsers[mentorship.aumniId].lastName}`}
-                            </Text>
-                            <br />
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                              {mentorshipUsers[mentorship.aumniId].email}
-                            </Text>
-                          </div>
-                        </Space>
-                      )}
+
+                      {mentorship.aumniId &&
+                        mentorshipUsers[mentorship.aumniId] && (
+                          <Space align="center">
+                            <Avatar
+                              size={32}
+                              icon={<UserOutlined />}
+                              src={
+                                mentorshipUsers[mentorship.aumniId]
+                                  .profilePicture
+                              }
+                            >
+                              {mentorshipUsers[
+                                mentorship.aumniId
+                              ].firstName?.charAt(0)}
+                            </Avatar>
+                            <div>
+                              <Text strong>
+                                {`${
+                                  mentorshipUsers[mentorship.aumniId].firstName
+                                } ${
+                                  mentorshipUsers[mentorship.aumniId].lastName
+                                }`}
+                              </Text>
+                              <br />
+                              <Text
+                                type="secondary"
+                                style={{ fontSize: "12px" }}
+                              >
+                                {mentorshipUsers[mentorship.aumniId].email}
+                              </Text>
+                            </div>
+                          </Space>
+                        )}
                     </Space>
                   </div>
 
@@ -324,16 +341,15 @@ function MentorRequestListPage() {
                   </div>
 
                   <Button
-  type="primary"
-  style={{ ...styles.viewButton, marginTop: 16 }}
-  onClick={() => handleViewDetails(mentorship.id)}
-  block
-  hidden={!userInfo.isMentor} // Only show the button if the user is a mentor
->
-  Chấp nhận và đặt lịch
-  <RightOutlined />
-</Button>
-
+                    type="primary"
+                    style={{ ...styles.viewButton, marginTop: 16 }}
+                    onClick={() => handleViewDetails(mentorship.id)}
+                    block
+                    hidden={!userInfo.isMentor} // Only show the button if the user is a mentor
+                  >
+                    Chấp nhận và đặt lịch
+                    <RightOutlined />
+                  </Button>
                 </Card>
               </Col>
             ))}
