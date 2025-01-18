@@ -35,6 +35,12 @@ function EventCard({ event, organizer, onClick, onEdit, onDelete, isOwner }) {
     onClick();
   };
 
+  const canEdit = () => {
+    const now = new Date();
+    const startDate = new Date(event.startDate);
+    return startDate > now;
+  };
+
   return (
     <Card
       hoverable
@@ -157,7 +163,7 @@ function EventCard({ event, organizer, onClick, onEdit, onDelete, isOwner }) {
         </Text>
       </div>
 
-      {isOwner && (
+      {isOwner && canEdit() && (
         <div className="event-actions" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
           <Button
             type="primary"

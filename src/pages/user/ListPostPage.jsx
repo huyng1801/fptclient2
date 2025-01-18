@@ -244,7 +244,7 @@ function ListPostPage() {
 
           <Col xs={24} sm={24} md={16} lg={18}>
             <div>
-              <div style={styles.sortSection}>
+              {/* <div style={styles.sortSection}>
                 <Button 
                   type="primary" 
                   onClick={() => navigate("/create-post")}
@@ -260,7 +260,7 @@ function ListPostPage() {
                   <Option value="titleAsc">Tên A-Z</Option>
                   <Option value="titleDesc">Tên Z-A</Option>
                 </Select>
-              </div>
+              </div> */}
 
               <div style={styles.postGrid}>
                 {posts.map((post) => (
