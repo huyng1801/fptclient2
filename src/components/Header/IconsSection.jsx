@@ -25,7 +25,7 @@ const IconsSection = () => {
       {userInfo ? (
         <>
           <span style={{ marginRight: '16px', fontWeight: 'bold' }}>
-            Xin chào, {userInfo.firstName} {userInfo.lastName} ({userInfo.roleName})
+            Xin chào, {userInfo.firstName} {userInfo.lastName}
           </span>
           <Button
             style={{

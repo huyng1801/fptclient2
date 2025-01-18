@@ -25,7 +25,7 @@ const MentorshipService = {
   createMentorship: async (mentorshipData) => {
     try {
       const response = await api.post('/mentorships', {
-        alumniId: mentorshipData.alumniId,
+        aumniId: mentorshipData.aumniId,
         requestMessage: mentorshipData.requestMessage,
         type: mentorshipData.type || 'PENDING',
         status: mentorshipData.status || 'ACTIVE'
