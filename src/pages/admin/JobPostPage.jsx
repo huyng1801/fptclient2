@@ -185,13 +185,13 @@ const JobPostPage = () => {
             type="primary"
             size="small"
           />
-          <Button
+          {/* <Button
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteJobPost(record.jobPostId)}
             type="primary"
             danger
             size="small"
-          />
+          /> */}
           <Link to={`/admin/jobapplications/${record.jobPostId}`}>
             <Button 
               icon={<EyeOutlined />}

@@ -110,13 +110,13 @@ const MajorCodePage = () => {
             onClick={() => openModal(record)}
             style={{ marginRight: 8 }}
           />
-          <Button
+          {/* <Button
             type="default"
             shape="circle"
             icon={<DeleteOutlined />}
             danger
             onClick={() => handleDeleteMajorCode(record.majorId)}
-          />
+          /> */}
         </>
       ),
     },

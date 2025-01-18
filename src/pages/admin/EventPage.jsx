@@ -189,13 +189,13 @@ const EventPage = () => {
             type="primary"
             size="small"
           />
-          <Button
+          {/* <Button
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteEvent(record.eventId)}
             type="primary"
             danger
             size="small"
-          />
+          /> */}
         </Space>
       ),
     },

@@ -176,13 +176,13 @@ const UserPage = () => {
             shape="circle"
             style={{ marginRight: 8 }}
           />
-          <Button
+          {/* <Button
             icon={<DeleteOutlined />}
             danger
             type="default"
             shape="circle"
             onClick={() => handleDeleteUser(user.userId)}
-          />
+          /> */}
         </>
       )
     }
