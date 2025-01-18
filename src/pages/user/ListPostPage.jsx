@@ -67,7 +67,7 @@ function ListPostPage() {
   const [error, setError] = useState(null);
   const [searchInput, setSearchInput] = useState("");
   const [filter, setFilter] = useState({ majorId: "", title: "", authorId: "" });
-  const [sort, setSort] = useState("dateDesc");
+  const [sort, setSort] = useState("titleDesc");
   const [showMyPosts, setShowMyPosts] = useState(false);
   const itemsPerPage = 6;
   const navigate = useNavigate();

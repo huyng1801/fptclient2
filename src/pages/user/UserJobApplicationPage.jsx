@@ -199,7 +199,7 @@ const UserJobApplicationPage = () => {
               <Descriptions.Item label="Nhiệm vụ chính">{selectedCV.primaryDuties}</Descriptions.Item>
               <Descriptions.Item label="Ngôn ngữ">{selectedCV.language} - {selectedCV.languageLevel}</Descriptions.Item>
               <Descriptions.Item label="Mức lương mong muốn">
-                ${selectedCV.minSalary} - ${selectedCV.maxSalary}
+                {selectedCV.minSalary}đ - {selectedCV.maxSalary}đ
                 {selectedCV.isDeal && ' (Có thể thương lượng)'}
               </Descriptions.Item>
               <Descriptions.Item label="Thời gian làm việc">
