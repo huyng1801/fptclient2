@@ -99,11 +99,11 @@ const MentorCard = ({ mentor, onClick }) => {
               {mentor.isMentor && <Tag color="purple">Mentor</Tag>}
             </div>
 
-            <div style={styles.infoRow}>
+            {/* <div style={styles.infoRow}>
               <StarOutlined style={{ color: '#faad14' }} />
               <Text strong>4.9</Text>
               <Text type="secondary">(Rating)</Text>
-            </div>
+            </div> */}
           </div>
         </Col>
       </Row>

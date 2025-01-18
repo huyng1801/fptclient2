@@ -124,14 +124,18 @@ const CVForm = ({ onSubmit, loading, initialValues }) => {
               </Col>
 
               <Col span={8}>
-                <Form.Item
-                  label="Cấp bậc công việc"
-                  name="jobLevel"
-                  rules={[{ required: true, message: 'Vui lòng nhập cấp bậc công việc!' }]}
-                >
-                  <Input placeholder="Nhập cấp bậc công việc" />
-                </Form.Item>
-              </Col>
+      <Form.Item
+        label="Cấp bậc công việc"
+        name="jobLevel"
+        rules={[{ required: true, message: 'Vui lòng nhập cấp bậc công việc!' }]}
+      >
+        <Select placeholder="Chọn cấp bậc công việc">
+          <Option value="beginner">Beginner</Option>
+          <Option value="intermediate">Intermediate</Option>
+          <Option value="advanced">Advanced</Option>
+        </Select>
+      </Form.Item>
+    </Col>
 
 
               <Col span={24}>

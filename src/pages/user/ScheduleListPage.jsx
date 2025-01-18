@@ -4,7 +4,8 @@ import {
   ClockCircleOutlined, 
   CheckCircleOutlined, 
   CloseCircleOutlined,
-  StarOutlined
+  StarOutlined,
+  CheckOutlined
 } from '@ant-design/icons';
 import UserLayout from '../../layouts/UserLayout';
 import ScheduleService from '../../services/ScheduleService';
@@ -46,16 +47,16 @@ const ScheduleListPage = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Pending':
-        return 'warning';
+      return 'warning';
       case 'Scheduled':
-        return 'success';
+      return 'success';
       case 'Canceled':
-        return 'error';
+      return 'error';
       case 'Completed':
-        return 'default';
+      return 'default';
       default:
-        return 'default';
-    }
+      return 'default';
+      }
   };
 
   const handleUpdateStatus = async (scheduleId, newStatus) => {
@@ -72,6 +73,16 @@ const ScheduleListPage = () => {
         description: 'Không thể cập nhật trạng thái lịch hẹn',
       });
     }
+  };
+
+  const handleComplete = (scheduleId) => {
+    Modal.confirm({
+      title: 'Xác nhận hoàn thành',
+      content: 'Bạn có chắc chắn muốn đánh dấu lịch hẹn này là đã hoàn thành?',
+      okText: 'Xác nhận',
+      cancelText: 'Hủy',
+      onOk: () => handleUpdateStatus(scheduleId, 'Completed')
+    });
   };
 
   const handleRating = async (scheduleId) => {
@@ -106,8 +117,6 @@ const ScheduleListPage = () => {
     }
   };
 
-  const isMentor = userInfo?.isMentor;
-
   const columns = [
     {
       title: 'Thời gian bắt đầu',
@@ -138,7 +147,7 @@ const ScheduleListPage = () => {
         </Tag>
       ),
     },
-    !isMentor && {
+    {
       title: 'Đánh giá',
       dataIndex: 'rating',
       key: 'rating',
@@ -154,7 +163,7 @@ const ScheduleListPage = () => {
               )}
             </>
           ) : (
-            isAlumni && record.status === 'Completed' && (
+            isAlumni && record.status === 'COMPLETED' && (
               <Button 
                 type="link" 
                 icon={<StarOutlined />}
@@ -193,7 +202,8 @@ const ScheduleListPage = () => {
           {record.status === 'Scheduled' && (
             <Button
               type="primary"
-              onClick={() => handleUpdateStatus(record.scheduleId, 'Completed')}
+              icon={<CheckOutlined />}
+              onClick={() => handleComplete(record.scheduleId)}
             >
               Hoàn thành
             </Button>
@@ -201,8 +211,7 @@ const ScheduleListPage = () => {
         </Space>
       ),
     },
-  ].filter(Boolean); // Filter out undefined columns
-  
+  ];
 
   return (
     <UserLayout>

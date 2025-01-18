@@ -94,9 +94,9 @@ const SidebarComponent = ({ collapsed, setCollapsed }) => {
               <MenuItem icon={<FormOutlined />} path="/schedule" itemKey="7">
                 Lịch trình
               </MenuItem>
-              <MenuItem icon={<FileDoneOutlined />} path="/rating" itemKey="8">
+              {/* <MenuItem icon={<FileDoneOutlined />} path="/rating" itemKey="8">
                 Đánh giá mentor
-              </MenuItem>
+              </MenuItem> */}
         
             </MenuSection>
 
