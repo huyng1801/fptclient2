@@ -100,7 +100,7 @@ function HomePage() {
           UserService.getAllUsers(),
         ]);
         const storedUserInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
-        if (userInfo.roleName === 'Recruiter') {
+        if (userInfo?.roleName === 'Recruiter') {
        
           navigate('/my-job-post'); 
         }
