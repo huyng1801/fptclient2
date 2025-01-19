@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import UserLayout from '../../layouts/UserLayout';
 import ScheduleService from '../../services/ScheduleService';
+import MentorshipService from '../../services/MentorshipService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -21,7 +22,7 @@ const ScheduleListPage = () => {
   const [form] = Form.useForm();
   const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
   const isAlumni = userInfo?.roleName === 'Alumni';
-
+    const isMentor = userInfo?.isMentor;
   useEffect(() => {
     fetchSchedules();
   }, []);
@@ -29,11 +30,38 @@ const ScheduleListPage = () => {
   const fetchSchedules = async () => {
     try {
       setLoading(true);
-      const response = await ScheduleService.getAllSchedules(
-        { mentorId: userInfo.userId },
-        { page: 1, size: 50 }
-      );
-      setSchedules(response.items);
+      
+      if (isMentor) {
+        // If user is a mentor, fetch schedules directly using mentorId
+        const response = await ScheduleService.getAllSchedules(
+          { mentorId: userInfo.userId },
+          { page: 1, size: 50 }
+        );
+        setSchedules(response.items);
+      } else {
+        // If user is an alumni, first get their mentorships
+        const mentorshipsResponse = await MentorshipService.getAllMentorships(
+          { aumniId: userInfo.userId },
+          { page: 1, size: 50 }
+        );
+
+        if (mentorshipsResponse.items && mentorshipsResponse.items.length > 0) {
+          // Get schedules for all mentorships
+          const mentorshipIds = mentorshipsResponse.items.map(m => m.id);
+          const schedulesPromises = mentorshipIds.map(mentorshipId => 
+            ScheduleService.getAllSchedules(
+              { mentorshipId },
+              { page: 1, size: 50 }
+            )
+          );
+console.log(mentorshipIds);
+          const schedulesResponses = await Promise.all(schedulesPromises);
+          const allSchedules = schedulesResponses.flatMap(response => response.items || []);
+          setSchedules(allSchedules);
+        } else {
+          setSchedules([]);
+        }
+      }
     } catch (error) {
       notification.error({
         message: 'Lỗi',
@@ -181,7 +209,7 @@ const ScheduleListPage = () => {
       key: 'action',
       render: (_, record) => (
         <Space>
-          {record.status === 'Pending' && (
+          {record.status === 'Pending' && isMentor && (
             <>
               <Button
                 type="primary"
@@ -199,7 +227,7 @@ const ScheduleListPage = () => {
               </Button>
             </>
           )}
-          {record.status === 'Scheduled' && (
+          {record.status === 'Scheduled' && isMentor &&  (
             <Button
               type="primary"
               icon={<CheckOutlined />}
